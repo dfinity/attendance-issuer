@@ -1,0 +1,96 @@
+{
+  "meta": {
+    "title": "Early Adopter Campaign",
+    "description": "Get the Early Adopter credential by connecting with Internet Identity, showcasing your status as one of the first to test advanced identity tech on the Internet Computer. Use this credential to join an exclusive OpenChat room and unlock future prizes.",
+    "url": "https://early-adopter-campaign.ic0.app/",
+    "type": "website"
+  },
+  "nav": [
+    {
+      "title": "How it Works",
+      "link": "#how-it-works"
+    },
+    {
+      "title": "Identity Innovation",
+      "link": "#identity-innovation"
+    }
+  ],
+  "githublink": "https://github.com/dfinity/early-adopter-campaign",
+  "copyright": {
+    "text": "© 2021 DFINITY. All rights reserved.",
+    "link": "https://dfinity.org/"
+  }, 
+  "login": "Connect",
+
+  "iibuttontext": "Start with Internet Identity",
+  
+  "mainTitle": "Become an Early Adopter",
+  "mainLead": "Get the Early Adopter credential by connecting with Internet Identity, showcasing your status as one of the first to test advanced identity tech on the Internet Computer. Use this credential to join an exclusive OpenChat room and unlock future prizes.",
+
+  "howtoChip": "How it Works",
+  "howtoTitle": "Use a verifiable credential to access an exclusive OpenChat group",
+  "howtoLead": "The Early Adopter campaign empowers you to test out Internet Identity’s newest feature: verifiable credentials. Whether you’re a developer, user, or digital identity enthusiast, earn an Early Adopter credential, and hold a piece of history on the Internet Computer.",
+
+  "howtoSteps": [
+    {
+      "title": "Sign up with Internet Identity",
+      "body": "Click “Let’s go!” and sign up for the Early Adopter campaign with Internet Identity."
+    },
+    {
+      "title": "Get your credential",
+      "body": "By signing up, the Early Adopter credential will be issued to your Internet Identity."
+    },
+    {
+      "title": "Join an exclusive chat on Openchat",
+      "body": "Using your credential, you will be able to join a private group chat on OC."
+    }
+  ],
+
+  "innovationChip": "Identity Innovation",
+  "innovationTitle": "Cutting Edge Identity Technology",
+  "innovationLead": "With verifiable credentials on the Internet Computer, it is easier and safer for people and organizations to share information with one another.",
+
+  "innovationCards": [
+    {
+      "title": "Verifiable",
+      "body": "A verifiable credential is a piece of data that’s source, integrity, validity, and ownership can be instantly verified.",
+      "image": "verifiable.png",
+      "type": "regular"
+    },
+    {
+      "title": "Private",
+      "body": "Whenever a user shares a credential with an app, a new identifier is created for the user, which prevents apps from tracking users across the web.",
+      "image": "private.png",
+      "type": "regular"
+    },
+    {
+      "title": "Reusable",
+      "body": "Users can share credentials with apps on a need-to-know basis to authorize their access to exclusive services.",
+      "image": "reusable.png",
+      "type": "regular"
+    },
+    {
+      "title": "Secure",
+      "body": "Verifiable credentials are stored 100% on-chain, which safeguards businesses and users from the potential liability of data breaches and fraud.",
+      "image": "secure.png",
+      "type": "highlighted"
+    }
+  ],
+
+  "connectionTitle" : "Become an Early Adopter",
+  "connectionLead" : "Connect with Internet Identity to instantly earn the Early Adopter credential, a piece of data that proves you are one of the first people to try groundbreaking identity technology on the Internet Computer. Using your Early Adopter credential, you can access an exclusive chatroom on OpenChat and earn future prizes.",
+  "connectionButton" : "Let's go!",
+
+
+  "confirmationTitle" : "Congratulations!",
+  "confirmationTitle2" : "You’ve earned the Early Adopter credential.",
+  "confirmationLead" : "Use this credential to join an exclusive chatroom on Openchat.",
+  "confirmationButton" : "Join the OpenChat group",
+  "confirmationLink" : "or view credential on Internet Identity", 
+
+  "returningTitle" : "You’ve been here before!",
+  "returningTitle2" : "It looks like you’ve earned the Early Adopter credential.",
+  "returningLead" : "Use this credential to join an exclusive chatroom on Openchat.",
+  "returningButton" : "Open the OpenChat group",
+  "returningLink" : "or view credential on Internet Identity"
+}
