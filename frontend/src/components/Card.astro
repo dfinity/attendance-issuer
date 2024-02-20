@@ -1,23 +1,23 @@
 ---
 interface Props {
-	title: string;
-	body: string;
-	href?: string;
-	type: 'regular' | 'highlighted';
-	image: string;
+  title: string;
+  body: string;
+  href?: string;
+  type: 'regular' | 'highlighted';
+  image: string;
 }
 
 const { href = null, title, body } = Astro.props;
 ---
 
 <div class="card">
-	<a href={href || '#'}>
-		<h2>
-			{title}
-			<span>&rarr;</span>
-		</h2>
-		<p>
-			{body}
-		</p>
-	</a>
+  <a href={href || '#'}>
+    <h2>
+      {title}
+      <span>&rarr;</span>
+    </h2>
+    <p>
+      {body}
+    </p>
+  </a>
 </div>

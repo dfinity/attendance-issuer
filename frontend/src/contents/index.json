@@ -19,11 +19,11 @@
   "copyright": {
     "text": "© 2021 DFINITY. All rights reserved.",
     "link": "https://dfinity.org/"
-  }, 
+  },
   "login": "Connect",
 
   "iibuttontext": "Start with Internet Identity",
-  
+
   "mainTitle": "Become an Early Adopter",
   "mainLead": "Get the Early Adopter credential by connecting with Internet Identity, showcasing your status as one of the first to test advanced identity tech on the Internet Computer. Use this credential to join an exclusive OpenChat room and unlock future prizes.",
 
@@ -77,20 +77,19 @@
     }
   ],
 
-  "connectionTitle" : "Become an Early Adopter",
-  "connectionLead" : "Connect with Internet Identity to instantly earn the Early Adopter credential, a piece of data that proves you are one of the first people to try groundbreaking identity technology on the Internet Computer. Using your Early Adopter credential, you can access an exclusive chatroom on OpenChat and earn future prizes.",
-  "connectionButton" : "Let's go!",
+  "connectionTitle": "Become an Early Adopter",
+  "connectionLead": "Connect with Internet Identity to instantly earn the Early Adopter credential, a piece of data that proves you are one of the first people to try groundbreaking identity technology on the Internet Computer. Using your Early Adopter credential, you can access an exclusive chatroom on OpenChat and earn future prizes.",
+  "connectionButton": "Let's go!",
 
+  "confirmationTitle": "Congratulations!",
+  "confirmationTitle2": "You’ve earned the Early Adopter credential.",
+  "confirmationLead": "Use this credential to join an exclusive chatroom on Openchat.",
+  "confirmationButton": "Join the OpenChat group",
+  "confirmationLink": "or view credential on Internet Identity",
 
-  "confirmationTitle" : "Congratulations!",
-  "confirmationTitle2" : "You’ve earned the Early Adopter credential.",
-  "confirmationLead" : "Use this credential to join an exclusive chatroom on Openchat.",
-  "confirmationButton" : "Join the OpenChat group",
-  "confirmationLink" : "or view credential on Internet Identity", 
-
-  "returningTitle" : "You’ve been here before!",
-  "returningTitle2" : "It looks like you’ve earned the Early Adopter credential.",
-  "returningLead" : "Use this credential to join an exclusive chatroom on Openchat.",
-  "returningButton" : "Open the OpenChat group",
-  "returningLink" : "or view credential on Internet Identity"
+  "returningTitle": "You’ve been here before!",
+  "returningTitle2": "It looks like you’ve earned the Early Adopter credential.",
+  "returningLead": "Use this credential to join an exclusive chatroom on Openchat.",
+  "returningButton": "Open the OpenChat group",
+  "returningLink": "or view credential on Internet Identity"
 }

@@ -36,3 +36,6 @@ All commands are run from the root of the project, from a terminal:
 | `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
 | `npm run astro -- --help` | Get help using the Astro CLI                     |
 
+## 📚 Astro
+
+This project was bootstrapped with [Astro](https://astro.build/). For more information, check out the [Astro documentation](https://docs.astro.build/). You might find using the https://marketplace.visualstudio.com/items?itemName=astro-build.astro-vscode extension for VSCode helpful for syntax highlighting and intellisense.
