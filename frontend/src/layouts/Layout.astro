@@ -45,6 +45,8 @@ const { title } = Astro.props;
 		font-display: swap;
 	}
 	:root {
+		/** value design tokens (to use in other vairables) */
+		/** vc: value color */
 		--vc-snow: #ffffff;
 		--vc-raven: #202126;
 		--vc-eggplant: #1c0b5a;
@@ -55,7 +57,11 @@ const { title } = Astro.props;
 
 		--vg-lovepotion: linear-gradient(90deg, var(--vc-grape), var(--vc-mika));
 		--vg-lovepotion--repeating: linear-gradient(90deg, var(--vc-grape), var(--vc-mika), var(--vc-grape));
-		
+
+		/**	vs: value size */
+
+		/** reference tokens (use these in actual CSS) */
+		/** rc: reference color */
 		--rc-background: var(--vc-snow);
 		--rc-onBackground: var(--vc-raven);
 
@@ -79,10 +85,14 @@ const { title } = Astro.props;
 
 		--rc-buttonBackground: var(--vg-lovepotion);
 		--rc-onButtonBackground: var(--vc-snow);
+
+		--rc-link: var(--vc-mika);
 	}
 	html {
   	font-family: "Circular", system-ui, sans-serif;
-		color: #202126;
+ 
+		background-color: var(--rc-background);
+		color: var(--rc-onBackground);
 	}
 
 </style>
