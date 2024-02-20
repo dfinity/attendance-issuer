@@ -8,7 +8,11 @@
     "build": "astro check && astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "prettier": "prettier --write ."
+    "lint": "npm run lint:prettier && npm run lint:eslint",
+    "lint:eslint": "eslint --ext .astro,.js,.ts . --max-warnings 0",
+    "lint:prettier": "prettier --check .",
+    "prettier": "prettier --write .",
+    "eslint": "eslint --fix"
   },
   "dependencies": {
     "@astrojs/check": "^0.5.4",
@@ -16,6 +20,10 @@
     "typescript": "^5.3.3"
   },
   "devDependencies": {
+    "@typescript-eslint/parser": "^7.0.2",
+    "eslint": "^8.56.0",
+    "eslint-plugin-astro": "^0.31.4",
+    "eslint-plugin-jsx-a11y": "^6.8.0",
     "prettier": "^3.2.5",
     "prettier-plugin-astro": "^0.13.0"
   }
