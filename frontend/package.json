@@ -11,8 +11,9 @@
     "lint": "npm run lint:prettier && npm run lint:eslint",
     "lint:eslint": "eslint --ext .astro,.js,.ts . --max-warnings 0",
     "lint:prettier": "prettier --check .",
-    "prettier": "prettier --write .",
-    "eslint": "eslint --fix"
+    "lint:fix": "npm run prettier:fix && npm run eslint:fix",
+    "prettier:fix": "prettier --write .",
+    "eslint:fix": "eslint --fix"
   },
   "dependencies": {
     "@astrojs/check": "^0.5.4",
@@ -20,6 +21,7 @@
     "typescript": "^5.3.3"
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.0.2",
     "@typescript-eslint/parser": "^7.0.2",
     "eslint": "^8.56.0",
     "eslint-plugin-astro": "^0.31.4",
