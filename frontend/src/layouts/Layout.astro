@@ -45,7 +45,40 @@ const { title } = Astro.props;
 		font-display: swap;
 	}
 	:root {
+		--vc-snow: #ffffff;
+		--vc-raven: #202126;
+		--vc-eggplant: #1c0b5a;
+		--vc-grape: #542eea;
+		--vc-mika: #863af1;
+		--vc-rosewater: #ede8fa;
+		--vc-chrome: #e5e5e5;
 
+		--vg-lovepotion: linear-gradient(90deg, var(--vc-grape), var(--vc-mika));
+		--vg-lovepotion--repeating: linear-gradient(90deg, var(--vc-grape), var(--vc-mika), var(--vc-grape));
+		
+		--rc-background: var(--vc-snow);
+		--rc-onBackground: var(--vc-raven);
+
+		--rc-background--inverted: var(--vc-eggplant);
+		--rc-onBackground--inverted: var(--vc-snow);
+
+		--rc-navbar: var(--rc-background--inverted);
+		--rc-onNavbar: var(--rc-onBackground--inverted);
+
+		--rc-footer: var(--rc-background);
+		--rc-onFooter: var(--rc-onBackground);
+
+		--rc-pillBackground: var(--vc-rosewater);
+		--rc-onPillBackground: var(--vc-eggplant);
+
+		--rc-cardBackground: var(--vc-chrome);
+		--rc-onCardBackground: var(--vc-raven);
+
+		--rc-cardBackground--highlight: var(--vg-lovepotion);
+		--rc-onCardBackground--highlight: var(--vc-snow);
+
+		--rc-buttonBackground: var(--vg-lovepotion);
+		--rc-onButtonBackground: var(--vc-snow);
 	}
 	html {
   	font-family: "Circular", system-ui, sans-serif;
