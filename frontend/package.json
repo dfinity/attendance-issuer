@@ -1,0 +1,22 @@
+{
+  "name": "early-adopter-campaign",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "prettier": "prettier --write ."
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.5.4",
+    "astro": "^4.4.0",
+    "typescript": "^5.3.3"
+  },
+  "devDependencies": {
+    "prettier": "^3.2.5",
+    "prettier-plugin-astro": "^0.13.0"
+  }
+}
