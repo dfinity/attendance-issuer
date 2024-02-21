@@ -232,6 +232,10 @@ const { title } = Astro.props;
     padding: var(--rs-gutter) var(--rs-inline-layout);
   }
 
+  .section {
+    margin-top: var(--rs-stack-section);
+  }
+
   .header__logos {
     display: flex;
     align-items: center;
@@ -248,12 +252,22 @@ const { title } = Astro.props;
     border-top-right-radius: var(--rs-border-radius);
   }
 
+  .pill {
+    background: var(--rc-pillBackground);
+    color: var(--rc-onPillBackground);
+    border-radius: var(--rs-border-radius);
+    padding: calc(var(--rs-gutter) * .5) var(--rs-gutter);
+    margin-bottom: var(--rs-gutter);
+    display: inline-block;
+  }
+
   .card {
     background: var(--rc-cardBackground);
     color: var(--rc-onCardBackground);
     border-radius: var(--rs-border-radius);
     padding: var(--rs-gutter);
     margin-bottom: var(--rs-gutter);
+    text-align: center;
   }
 
   .card--intro {
@@ -261,12 +275,12 @@ const { title } = Astro.props;
     color: var(--rc-onCardBackground--inverted);
     padding: calc(var(--rs-gutter) * 4) var(--rs-inline-layout) calc(var(--rs-gutter) * 2);
     margin-bottom: var(--rs-gutter);
+    text-align: left;
   }
 
   .innovation-cards {
     display: grid;
     grid-template-columns: repeat(auto-fill,calc(50% - var(--rs-gutter)));
     gap: var(--rs-gutter);
-
   }
 </style>
