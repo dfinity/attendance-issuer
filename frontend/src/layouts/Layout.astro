@@ -51,7 +51,7 @@ const { title } = Astro.props;
     --vc-raven: #202126;
     --vc-eggplant: #1c0b5a;
     --vc-grape: #542eea;
-    --vc-mika: #863af1;
+    --vc-mika: #8c45f0;
     --vc-rosewater: #ede8fa;
     --vc-chrome: #e5e5e5;
     
@@ -81,7 +81,7 @@ const { title } = Astro.props;
     --rc-cardBackground--highlight: var(--vg-lovepotion);
     --rc-onCardBackground--highlight: var(--vc-snow);
     
-    --rc-buttonBackground: var(--vg-lovepotion);
+    --rc-buttonBackground: var(--vg-lovepotion--repeating);
     --rc-onButtonBackground: var(--vc-snow);
     
     --rc-link: var(--vc-mika);
@@ -115,6 +115,7 @@ const { title } = Astro.props;
     
     /** rs: reference size */
     --rs-line: var(--vs-electron);
+    --rs-line--fat: calc(var(--rs-line) * 2);
     
     --rs-gutter: var(--vs-wolf);
     --rs-gutter--large: calc(var(--rs-gutter) * 1.4);
@@ -124,6 +125,7 @@ const { title } = Astro.props;
     --rs-stack-section: var(--vs-hippo);
 
     --rs-border-radius: var(--vs-wolf);
+    --rs-border-radius--small: var(--vs-fox);
     
     /** helper vars */
     --percent-10px: 62.5%;
@@ -151,6 +153,51 @@ const { title } = Astro.props;
     text-decoration: none;
   }
 
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .button {
+    position: relative;
+    display: block;
+    background: var(--rc-buttonBackground);
+    background-size: 200% 100%;
+    color: var(--rc-onButtonBackground);
+    border-radius: var(--rs-border-radius--small);
+    font-size: var(--rst-button);
+    box-shadow: inset 0 0 0 var(--rs-line--fat) rgba(255 255 255 / .5);
+    padding: calc(var(--rs-gutter) * .75) calc(2 * var(--rs-gutter) + 4rem) calc(var(--rs-gutter) * .75) var(--rs-gutter);
+    font-weight: 600;
+    width: max-content;
+  }
+
+  .button::after {
+    position: absolute;
+    content: '';
+    display: block;
+    width: 4rem;
+    height: 2rem;
+    background: url('/ii-symbol.webp') no-repeat;
+    background-size: contain;
+    right: var(--rs-gutter);
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .button:hover {
+    animation: gradient 1.5s ease-in;
+  }
+
+  @keyframes gradient {
+    0% {
+      background-position: 0 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
   .design-width {
     max-width: var(--design-max-width);
     margin: 0 auto;
@@ -161,6 +208,20 @@ const { title } = Astro.props;
     color: var(--rc-onNavbar);
 
     border-radius: var(--rs-border-radius);
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: var(--rs-gutter) var(--rs-inline-layout);
+  }
+
+  .header__logos {
+    display: flex;
+    align-items: center;
+  }
+  .header__logo {
+    width: 15.3rem;
   }
 
   .footer {
