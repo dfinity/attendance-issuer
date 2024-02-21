@@ -1,87 +1,72 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import Card from '../components/Card.astro';
 import content from '../contents/index.json';
 ---
 
 <Layout title={content.meta.title}>
-  <main>
-    <div>
-      {content.meta.title}
-    </div>
-    <div>
-      {content.meta.description}
-    </div>
-    <div>
-      {content.meta.url}
-    </div>
-    <div>
-      {content.meta.type}
-    </div>
-    
-    <div class="nav">
-      {content.nav.map((item) => (
-        <a href={item.link}>{item.title}</a>
-        ))}
-        <a href="#">{content.login}</a>
+  <div class="header design-width">
+    <div class="header__logos">
+      <div class="header__logo">
+        <img class="header__image" src="vc-logo.webp" alt={content.meta.title} />
       </div>
+      <div class="header__logo">
+        <img class="header__image" src="ii-logo.webp" alt="Internet Identity" />
+      </div>  
+    </div>
+
+    <aside class="header__links">
+      {content.nav.map((item) => (
+        <a class="heder__link" href={item.link}>{item.title}</a>
+      ))}
+      <a class="heder__link" href={content.githublink}>github</a>
+      <a class="heder__link" href="#">{content.login}</a>
+    </aside>
+  </div>
+
+  <main class="design-width">
+    <a href="#">{content.iibuttontext}</a>
       
-      <a href={content.githublink}>github</a>
+    <article class="card">
+      <h1>{content.mainTitle}</h1>
+      <p>{content.mainLead}</p>
       <a href="#">{content.iibuttontext}</a>
+    </article>
       
-      <article>
-        <h1>{content.mainTitle}</h1>
-        <p>{content.mainLead}</p>
-        <a href="#">{content.iibuttontext}</a>
-      </article>
-      
-      <article>
-        <span>{content.howtoChip}</span>
-        <h2>{content.howtoTitle}</h2>
-        <p>{content.howtoLead}</p>
-        <ol>
-          {content.howtoSteps.map((step) => (
-            <li>
-              <aside>
-                <h3>{step.title}</h3>
-                <p>{step.body}</p>
-              </aside>
-            </li>
-            ))}
-        </ol>
-        <a href="#">{content.iibuttontext}</a>
-      </article>
-
-      <article>
-        <span>{content.innovationChip}</span>
-        <h2>{content.innovationTitle}</h2>
-        <p>{content.innovationLead}</p>
-
-        <div>
-          {content.innovationCards.map((card) => (
-            <Card
-              title={card.title}
-              body={card.body}
-              image={card.image}
-              type={card.type as 'regular' | 'highlighted'}
-            />
+    <article>
+      <span>{content.howtoChip}</span>
+      <h2>{content.howtoTitle}</h2>
+      <p>{content.howtoLead}</p>
+      <ol>
+        {content.howtoSteps.map((step) => (
+          <li>
+            <aside>
+              <h3>{step.title}</h3>
+              <p>{step.body}</p>
+            </aside>
+          </li>
           ))}
-        </div>
-      </article>
+      </ol>
+      <a href="#">{content.iibuttontext}</a>
+    </article>
+
+    <article>
+      <span>{content.innovationChip}</span>
+      <h2>{content.innovationTitle}</h2>
+      <p>{content.innovationLead}</p>
+
+      <div>
+        {content.innovationCards.map((card) => (
+          <aside class="card">
+            <img src={card.image} alt={card.title} />
+            <h3>{card.title}</h3>
+            <p>{card.body}</p>
+          </aside>
+        ))}
+      </div>
+    </article>
           
-    <footer>
+    <footer class="design-width footer">
       <p><a href={content.copyright.link}>{content.copyright.text}</a></p>
     </footer>
   </main>
 </Layout>
-
-<style>
-main {
-  margin: auto;
-  padding: 1rem;
-  width: 800px;
-  max-width: calc(100% - 2rem);
-  font-size: 20px;
-  line-height: 1.6;
-}
-</style>

@@ -69,8 +69,8 @@ const { title } = Astro.props;
     --rc-navbar: var(--rc-background--inverted);
     --rc-onNavbar: var(--rc-onBackground--inverted);
     
-    --rc-footer: var(--rc-background);
-    --rc-onFooter: var(--rc-onBackground);
+    --rc-footer: var(--rc-navbar);
+    --rc-onFooter: var(--rc-onNavbar);
     
     --rc-pillBackground: var(--vc-rosewater);
     --rc-onPillBackground: var(--vc-eggplant);
@@ -122,9 +122,12 @@ const { title } = Astro.props;
     --rs-inline-layout: var(--vs-trex);
     
     --rs-stack-section: var(--vs-hippo);
+
+    --rs-border-radius: var(--vs-wolf);
     
     /** helper vars */
     --percent-10px: 62.5%;
+    --design-max-width: 147rem;
   }
 
   html {
@@ -140,5 +143,31 @@ const { title } = Astro.props;
   body {
     font-size: var(--rst-body);
     line-height: 1.4;
+    padding: var(--rs-gutter);
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .design-width {
+    max-width: var(--design-max-width);
+    margin: 0 auto;
+  }
+
+  .header {
+    background: var(--rc-navbar);
+    color: var(--rc-onNavbar);
+
+    border-radius: var(--rs-border-radius);
+  }
+
+  .footer {
+    background: var(--rc-footer);
+    color: var(--rc-onFooter);
+
+    border-top-left-radius: var(--rs-border-radius);
+    border-top-right-radius: var(--rs-border-radius);
   }
 </style>
