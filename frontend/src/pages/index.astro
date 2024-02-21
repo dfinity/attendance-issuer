@@ -4,33 +4,34 @@ import content from '../contents/index.json';
 ---
 
 <Layout title={content.meta.title}>
-  <div class="header design-width">
-    <div class="header__logos">
-      <div class="header__logo">
-        <img class="header__image" src="vc-logo.webp" alt={content.meta.title} />
+  <div class="section-top">
+    <div class="header design-width">
+      <div class="header__logos">
+        <div class="header__logo">
+          <img class="header__image" src="vc-logo.webp" alt={content.meta.title} />
+        </div>
+        <div class="header__logo">
+          <img class="header__image" src="ii-logo.webp" alt="Internet Identity" />
+        </div>  
       </div>
-      <div class="header__logo">
-        <img class="header__image" src="ii-logo.webp" alt="Internet Identity" />
-      </div>  
+
+      <aside class="header__links">
+        {content.nav.map((item) => (
+          <a class="heder__link" href={item.link}>{item.title}</a>
+        ))}
+        <a class="heder__link" href={content.githublink}>github</a>
+        <a class="heder__link" href="#">{content.login}</a>
+      </aside>
     </div>
-
-    <aside class="header__links">
-      {content.nav.map((item) => (
-        <a class="heder__link" href={item.link}>{item.title}</a>
-      ))}
-      <a class="heder__link" href={content.githublink}>github</a>
-      <a class="heder__link" href="#">{content.login}</a>
-    </aside>
   </div>
+  <main></main>
+  <article class="card card--intro design-width">
+    <h1>{content.mainTitle}</h1>
+    <p>{content.mainLead}</p>
+    <a href="#" class="button">{content.iibuttontext}</a>
+  </article>
 
-  <main class="design-width">
-      
-    <article class="card">
-      <h1>{content.mainTitle}</h1>
-      <p>{content.mainLead}</p>
-      <a href="#" class="button">{content.iibuttontext}</a>
-    </article>
-      
+  <div class="design-width">
     <article>
       <span>{content.howtoChip}</span>
       <h2>{content.howtoTitle}</h2>
@@ -53,7 +54,7 @@ import content from '../contents/index.json';
       <h2>{content.innovationTitle}</h2>
       <p>{content.innovationLead}</p>
 
-      <div>
+      <div class="innovation-cards">
         {content.innovationCards.map((card) => (
           <aside class="card">
             <img src={card.image} alt={card.title} />
@@ -67,5 +68,6 @@ import content from '../contents/index.json';
     <footer class="design-width footer">
       <p><a href={content.copyright.link}>{content.copyright.text}</a></p>
     </footer>
+  </div>
   </main>
 </Layout>
