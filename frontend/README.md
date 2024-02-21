@@ -38,4 +38,4 @@ All commands are run from the root of the project, from a terminal:
 
 ## 📚 Astro
 
-This project was bootstrapped with [Astro](https://astro.build/). For more information, check out the [Astro documentation](https://docs.astro.build/). You might find using the https://marketplace.visualstudio.com/items?itemName=astro-build.astro-vscode extension for VSCode helpful for syntax highlighting and intellisense.
+This project was bootstrapped with [Astro](https://astro.build/). For more information, check out the [Astro documentation](https://docs.astro.build/).
