@@ -164,6 +164,37 @@ const { title } = Astro.props;
     height: auto;
   }
 
+  .title {
+    font-size: var(--rst-title--subsection);
+    font-weight: 600;
+    margin-bottom: .5em;
+  }
+
+  .title--main {
+    font-size: var(--rst-title--main);
+    line-height: 1;
+    position: relative;
+  }
+ 
+  .title--main::after {
+    position: absolute;
+    top: 100%;
+    left: -2.5%;
+    content: '';
+    display: block;
+    width: 90%;
+    aspect-ratio: 7;
+    background: url(/deco-line.webp);
+    background-size: contain;
+    margin-top: var(--rs-gutter);
+    transform: translateY(-50%);
+  }
+  .title--section {
+    font-size: var(--rst-title--section);
+    max-width: 20ch;
+    line-height: 1.1;
+  }
+
   .button {
     position: relative;
     display: block;
@@ -236,6 +267,15 @@ const { title } = Astro.props;
     margin-top: var(--rs-stack-section);
   }
 
+  .section__intro {
+    margin-top: var(--rs-gutter);
+    max-width: 50ch;
+  }
+
+  .section--howto {
+    padding-left: var(--rs-inline-layout);
+  } 
+
   .header__logos {
     display: flex;
     align-items: center;
@@ -276,11 +316,24 @@ const { title } = Astro.props;
     padding: calc(var(--rs-gutter) * 4) var(--rs-inline-layout) calc(var(--rs-gutter) * 2);
     margin-bottom: var(--rs-gutter);
     text-align: left;
+
+    display: flex;
+    gap: calc(4 * var(--rs-gutter));
+  }
+
+  .card__text {
+    flex: 0 0 50%;
   }
 
   .innovation-cards {
     display: grid;
     grid-template-columns: repeat(auto-fill,calc(50% - var(--rs-gutter)));
     gap: var(--rs-gutter);
+  }
+
+  .card__image {
+    width: 50%;
+    height: auto;
+    flex: 0 0 40%;
   }
 </style>

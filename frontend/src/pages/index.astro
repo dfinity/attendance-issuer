@@ -1,6 +1,6 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import content from '../contents/index.json';
+import Layout from "../layouts/Layout.astro";
+import content from "../contents/index.json";
 ---
 
 <Layout title={content.meta.title}>
@@ -8,66 +8,87 @@ import content from '../contents/index.json';
     <div class="header design-width">
       <div class="header__logos">
         <div class="header__logo">
-          <img class="header__image" src="vc-logo.webp" alt={content.meta.title} />
+          <img
+            class="header__image"
+            src="vc-logo.webp"
+            alt={content.meta.title}
+          />
         </div>
         <div class="header__logo">
-          <img class="header__image" src="ii-logo.webp" alt="Internet Identity" />
-        </div>  
+          <img
+            class="header__image"
+            src="ii-logo.webp"
+            alt="Internet Identity"
+          />
+        </div>
       </div>
 
       <aside class="header__links">
-        {content.nav.map((item) => (
-          <a class="heder__link" href={item.link}>{item.title}</a>
-        ))}
+        {
+          content.nav.map((item) => (
+            <a class="heder__link" href={item.link}>
+              {item.title}
+            </a>
+          ))
+        }
         <a class="heder__link" href={content.githublink}>github</a>
         <a class="heder__link" href="#">{content.login}</a>
       </aside>
     </div>
   </div>
-  <main></main>
-  <article class="card card--intro design-width">
-    <h1>{content.mainTitle}</h1>
-    <p>{content.mainLead}</p>
-    <a href="#" class="button">{content.iibuttontext}</a>
-  </article>
-
-  <div class="design-width">
-    <article class="section">
-      <span class="pill">{content.howtoChip}</span>
-      <h2>{content.howtoTitle}</h2>
-      <p>{content.howtoLead}</p>
-      <ol>
-        {content.howtoSteps.map((step) => (
-          <li>
-            <aside>
-              <h3>{step.title}</h3>
-              <p>{step.body}</p>
-            </aside>
-          </li>
-          ))}
-      </ol>
-      <a href="#" class="button">{content.iibuttontext}</a>
-    </article>
-
-    <article class="section">
-      <span class="pill">{content.innovationChip}</span>
-      <h2>{content.innovationTitle}</h2>
-      <p>{content.innovationLead}</p>
-
-      <div class="innovation-cards">
-        {content.innovationCards.map((card) => (
-          <aside class="card">
-            <img src={card.image} alt={card.title} />
-            <h3>{card.title}</h3>
-            <p>{card.body}</p>
-          </aside>
-        ))}
+  <main>
+    <article class="card card--intro design-width">
+      <div class="card__body">
+        <h1 class="title title--main">{content.mainTitle}</h1>
+        <p>{content.mainLead}</p>
+        <a href="#" class="button">{content.iibuttontext}</a>
+      </div>
+      <div class="card__image">
+        <img src="illu-homepage.webp" alt="Internet Identity" />
       </div>
     </article>
-          
+
+    <div class="design-width">
+      <article class="section section--howto">
+        <span class="pill">{content.howtoChip}</span>
+        <h2 class="title title--section">{content.howtoTitle}</h2>
+        <p class="section__intro">{content.howtoLead}</p>
+        <ol>
+          {
+            content.howtoSteps.map((step) => (
+              <li>
+                <aside>
+                  <h3>{step.title}</h3>
+                  <p>{step.body}</p>
+                </aside>
+              </li>
+            ))
+          }
+        </ol>
+        <a href="#" class="button">{content.iibuttontext}</a>
+      </article>
+
+      <article class="section section--innovation">
+        <span class="pill">{content.innovationChip}</span>
+        <h2 class="title title--section">{content.innovationTitle}</h2>
+        <p class="section__intro">{content.innovationLead}</p>
+
+        <div class="innovation-cards">
+          {
+            content.innovationCards.map((card) => (
+              <aside class:list={["card", `card--${card.type}`]}>
+                <img class="card__image" src={card.image} alt={card.title} />
+                <h3 class="card__title">{card.title}</h3>
+                <p class="card__body">{card.body}</p>
+              </aside>
+            ))
+          }
+        </div>
+      </article>
+    </main>
+
     <footer class="design-width footer">
       <p><a href={content.copyright.link}>{content.copyright.text}</a></p>
     </footer>
   </div>
-  </main>
 </Layout>
