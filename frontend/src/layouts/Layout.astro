@@ -88,6 +88,8 @@ const { title } = Astro.props;
     --rc-onButtonBackground: var(--vc-snow);
     
     --rc-link: var(--vc-mika);
+    --rc-line: var(--vc-chrome);
+    --rc-line-dark: var(--vc-raven);
     
     
     /**	vs: value size (to use in other vairables) */
@@ -122,10 +124,13 @@ const { title } = Astro.props;
     
     --rs-gutter: var(--vs-wolf);
     --rs-gutter--large: calc(var(--rs-gutter) * 1.4);
-    
+    --rs-gutter--step: var(--vs-tiger);
+    --rs-gutter-body--bezel: var(--vs-horse);
+
     --rs-inline-layout: var(--vs-trex);
     
     --rs-stack-section: var(--vs-hippo);
+    --rs-stack-button: calc(2 * var(--rs-gutter));
 
     --rs-border-radius: var(--vs-wolf);
     --rs-border-radius--small: var(--vs-fox);
@@ -143,7 +148,6 @@ const { title } = Astro.props;
     font-size: var(--percent-10px);
     font-weight: 350;
     letter-spacing: -0.005em;
-    
   }
 
   body {
@@ -168,12 +172,13 @@ const { title } = Astro.props;
     font-size: var(--rst-title--subsection);
     font-weight: 600;
     margin-bottom: .5em;
+    margin-top: 0;
+    line-height: 1;
   }
-
   .title--main {
     font-size: var(--rst-title--main);
-    line-height: 1;
     position: relative;
+    margin-top: 0.3em;
   }
  
   .title--main::after {
@@ -192,7 +197,8 @@ const { title } = Astro.props;
   .title--section {
     font-size: var(--rst-title--section);
     max-width: 20ch;
-    line-height: 1.1;
+    line-height: 1.1;    
+    margin-bottom: var(--rs-gutter);
   }
 
   .button {
@@ -208,7 +214,7 @@ const { title } = Astro.props;
     font-weight: 600;
     width: max-content;
     transition: box-shadow .3s ease;
-  
+    margin-top: var(--rs-stack-button);
   }
 
   .button::after {
@@ -222,6 +228,7 @@ const { title } = Astro.props;
     right: var(--rs-gutter);
     top: 50%;
     transform: translateY(-50%);
+    pointer-events: none;
   }
 
   .button:hover {
@@ -296,9 +303,80 @@ const { title } = Astro.props;
     background: var(--rc-pillBackground);
     color: var(--rc-onPillBackground);
     border-radius: var(--rs-border-radius);
-    padding: calc(var(--rs-gutter) * .5) var(--rs-gutter);
+    padding: calc(var(--rs-gutter) * .3) calc(var(--rs-gutter) * .4);
     margin-bottom: var(--rs-gutter);
-    display: inline-block;
+    display: block;
+    font-size: var(--rst-pill);
+    text-transform: uppercase;
+    width: max-content;
+  }
+
+  .steps {
+    counter-reset: section;
+    margin-top: var(--rs-stack-section);
+    padding: 0;
+    list-style: none;
+    border-left: var(--rs-line) solid var(--rc-line);
+  }
+
+  .steps__step {
+    position: relative;
+    counter-increment: section;
+    display: flex;
+    gap: var(--rs-gutter);
+    align-items: flex-start;
+    padding-left: var(--rs-gutter--step);
+    padding-top: var(--rs-gutter--step);
+    padding-bottom: var(--rs-gutter--step);
+  }
+
+  .steps__step::before {
+    display: block;
+    content: counter(section);
+    width: 4rem;
+    height: 4rem;
+    flex: 0 0 4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 100%;
+    box-shadow: inset 0 0 0 var(--rs-line) var(--rc-cardBackground);
+  }
+
+  .steps__step + .steps__step::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: var(--rs-line);
+    background: var(--rc-line);
+    width: calc(var(--rs-gutter--step) * 1.5);
+  }
+  .steps__title {
+    margin-bottom: var(--rs-gutter);
+    margin-top: 0;
+    flex: 0 0 35%;
+  }
+
+  .steps__body {
+    position: relative;
+    padding: var(--rs-gutter-body--bezel) var(--rs-gutter--step);
+    background: var(--rc-cardBackground);
+    margin: 0;
+    border-radius: var(--rs-border-radius);
+    border-top-left-radius: 0;
+  }
+
+  .steps__body::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--rs-border-radius);
+    height: var(--rs-border-radius);
+    background: var(--rc-cardBackground);
+    transform: translateX(-100%);
+    clip-path: polygon(0 0, 100% 0, 100% 100%);
   }
 
   .card {

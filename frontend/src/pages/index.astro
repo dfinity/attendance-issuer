@@ -32,7 +32,7 @@ import content from "../contents/index.json";
           ))
         }
         <a class="heder__link" href={content.githublink}>github</a>
-        <a class="heder__link" href="#">{content.login}</a>
+        <a class="heder__link" href="#" data-login>{content.login}</a>
       </aside>
     </div>
   </div>
@@ -41,7 +41,7 @@ import content from "../contents/index.json";
       <div class="card__body">
         <h1 class="title title--main">{content.mainTitle}</h1>
         <p>{content.mainLead}</p>
-        <a href="#" class="button">{content.iibuttontext}</a>
+        <a href="#" class="button" data-login>{content.iibuttontext}</a>
       </div>
       <div class="card__image">
         <img src="illu-homepage.webp" alt="Internet Identity" />
@@ -53,19 +53,17 @@ import content from "../contents/index.json";
         <span class="pill">{content.howtoChip}</span>
         <h2 class="title title--section">{content.howtoTitle}</h2>
         <p class="section__intro">{content.howtoLead}</p>
-        <ol>
+        <ol class="steps">
           {
             content.howtoSteps.map((step) => (
-              <li>
-                <aside>
-                  <h3>{step.title}</h3>
-                  <p>{step.body}</p>
-                </aside>
+              <li class="steps__step">
+                <h3 class="steps__title title">{step.title}</h3>
+                <p class="steps__body">{step.body}</p>
               </li>
             ))
           }
         </ol>
-        <a href="#" class="button">{content.iibuttontext}</a>
+        <a href="#" class="button" data-login>{content.iibuttontext}</a>
       </article>
 
       <article class="section section--innovation">
@@ -92,3 +90,13 @@ import content from "../contents/index.json";
     </footer>
   </div>
 </Layout>
+
+<script>
+  document.addEventListener('click', (e) => {
+    if (!e.target.matches('[data-login]')) return;
+
+    e.preventDefault();
+    console.log('do the login');
+  }, true);
+</script>
+```
