@@ -67,10 +67,11 @@ import content from "../contents/index.json";
       </article>
 
       <article class="section section--innovation">
-        <span class="pill">{content.innovationChip}</span>
-        <h2 class="title title--section">{content.innovationTitle}</h2>
-        <p class="section__intro">{content.innovationLead}</p>
-
+        <header class="section__header">
+          <span class="pill">{content.innovationChip}</span>
+          <h2 class="title title--section">{content.innovationTitle}</h2>
+          <p class="section__intro">{content.innovationLead}</p>
+        </header>
         <div class="innovation-cards">
           {
             content.innovationCards.map((card) => (
@@ -99,4 +100,3 @@ import content from "../contents/index.json";
     console.log('do the login');
   }, true);
 </script>
-```

@@ -274,6 +274,10 @@ const { title } = Astro.props;
     margin-top: var(--rs-stack-section);
   }
 
+  .section__header {
+    padding-left: var(--rs-inline-layout);
+  }
+
   .section__intro {
     margin-top: var(--rs-gutter);
     max-width: 50ch;
@@ -330,6 +334,10 @@ const { title } = Astro.props;
     padding-bottom: var(--rs-gutter--step);
   }
 
+  .steps__step:last-child {
+    padding-bottom: 0;
+  }
+
   .steps__step::before {
     display: block;
     content: counter(section);
@@ -384,8 +392,12 @@ const { title } = Astro.props;
     color: var(--rc-onCardBackground);
     border-radius: var(--rs-border-radius);
     padding: var(--rs-gutter);
-    margin-bottom: var(--rs-gutter);
     text-align: center;
+  }
+
+  .card--highlighted {
+    background: var(--rc-cardBackground--highlight);
+    color: var(--rc-onCardBackground--highlight);
   }
 
   .card--intro {
@@ -405,8 +417,9 @@ const { title } = Astro.props;
 
   .innovation-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fill,calc(50% - var(--rs-gutter)));
+    grid-template-columns: calc(55% - var(--rs-gutter)) 45%;
     gap: var(--rs-gutter);
+    margin-top: var(--rs-stack-section);
   }
 
   .card__image {
