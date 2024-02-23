@@ -51,7 +51,7 @@ const { title } = Astro.props;
     --vc-raven: #202126;
     --vc-eggplant: #1c0b5a;
     --vc-grape: #542eea;
-    --vc-mika: #863af1;
+    --vc-mika: #8c45f0;
     --vc-rosewater: #ede8fa;
     --vc-chrome: #e5e5e5;
     
@@ -69,8 +69,8 @@ const { title } = Astro.props;
     --rc-navbar: var(--rc-background--inverted);
     --rc-onNavbar: var(--rc-onBackground--inverted);
     
-    --rc-footer: var(--rc-background);
-    --rc-onFooter: var(--rc-onBackground);
+    --rc-footer: var(--rc-navbar);
+    --rc-onFooter: var(--rc-onNavbar);
     
     --rc-pillBackground: var(--vc-rosewater);
     --rc-onPillBackground: var(--vc-eggplant);
@@ -80,11 +80,16 @@ const { title } = Astro.props;
     
     --rc-cardBackground--highlight: var(--vg-lovepotion);
     --rc-onCardBackground--highlight: var(--vc-snow);
+
+    --rc-cardBackground--inverted: var(--vc-eggplant);
+    --rc-onCardBackground--inverted: var(--vc-snow);
     
-    --rc-buttonBackground: var(--vg-lovepotion);
+    --rc-buttonBackground: var(--vg-lovepotion--repeating);
     --rc-onButtonBackground: var(--vc-snow);
     
     --rc-link: var(--vc-mika);
+    --rc-line: var(--vc-chrome);
+    --rc-line-dark: var(--vc-raven);
     
     
     /**	vs: value size (to use in other vairables) */
@@ -115,16 +120,24 @@ const { title } = Astro.props;
     
     /** rs: reference size */
     --rs-line: var(--vs-electron);
+    --rs-line--fat: calc(var(--rs-line) * 2);
     
     --rs-gutter: var(--vs-wolf);
     --rs-gutter--large: calc(var(--rs-gutter) * 1.4);
-    
+    --rs-gutter--step: var(--vs-tiger);
+    --rs-gutter-body--bezel: var(--vs-horse);
+
     --rs-inline-layout: var(--vs-trex);
     
     --rs-stack-section: var(--vs-hippo);
+    --rs-stack-button: calc(2 * var(--rs-gutter));
+
+    --rs-border-radius: var(--vs-wolf);
+    --rs-border-radius--small: var(--vs-fox);
     
     /** helper vars */
     --percent-10px: 62.5%;
+    --design-max-width: 147rem;
   }
 
   html {
@@ -140,5 +153,278 @@ const { title } = Astro.props;
   body {
     font-size: var(--rst-body);
     line-height: 1.4;
+    padding: var(--rs-gutter);
+    margin: 0;
+    scrollbar-gutter: stable;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .title {
+    font-size: var(--rst-title--subsection);
+    font-weight: 600;
+    margin-bottom: .5em;
+    margin-top: 0;
+    line-height: 1;
+  }
+  .title--main {
+    font-size: var(--rst-title--main);
+    position: relative;
+    margin-top: 0.3em;
+  }
+ 
+  .title--main::after {
+    position: absolute;
+    top: 100%;
+    left: -2.5%;
+    content: '';
+    display: block;
+    width: 90%;
+    aspect-ratio: 7;
+    background: url(/deco-line.webp);
+    background-size: contain;
+    margin-top: var(--rs-gutter);
+    transform: translateY(-50%);
+  }
+  .title--section {
+    font-size: var(--rst-title--section);
+    max-width: 20ch;
+    line-height: 1.1;    
+    margin-bottom: var(--rs-gutter);
+  }
+
+  .button {
+    position: relative;
+    display: block;
+    background: var(--rc-buttonBackground);
+    background-size: 200% 100%;
+    color: var(--rc-onButtonBackground);
+    border-radius: var(--rs-border-radius--small);
+    font-size: var(--rst-button);
+    box-shadow: inset 0 0 0 var(--rs-line--fat) rgba(255 255 255 / .5);
+    padding: calc(var(--rs-gutter) * .75) calc(2 * var(--rs-gutter) + 4rem) calc(var(--rs-gutter) * .75) var(--rs-gutter);
+    font-weight: 600;
+    width: max-content;
+    transition: box-shadow .3s ease;
+    margin-top: var(--rs-stack-button);
+  }
+
+  .button::after {
+    position: absolute;
+    content: '';
+    display: block;
+    width: 4rem;
+    height: 2rem;
+    background: url('/ii-symbol.webp') no-repeat;
+    background-size: contain;
+    right: var(--rs-gutter);
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  .button:hover {
+    animation: gradient 1.5s ease-in;
+    box-shadow: inset 0 0 0 calc(var(--rs-line--fat) * 2) rgba(255 255 255 / .2);
+  }
+
+  @keyframes gradient {
+    0% {
+      background-position: 0 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  .design-width {
+    max-width: var(--design-max-width);
+    margin: 0 auto;
+  }
+
+  .section-top {
+    position: fixed;
+    top: var(--rs-gutter);
+    left: var(--rs-gutter);
+    right: var(--rs-gutter);
+    z-index: 1;
+  }
+  .header {
+    background: var(--rc-navbar);
+    color: var(--rc-onNavbar);
+
+    border-radius: var(--rs-border-radius);
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: var(--rs-gutter) var(--rs-inline-layout);
+  }
+
+  .section {
+    margin-top: var(--rs-stack-section);
+  }
+
+  .section__header {
+    padding-left: var(--rs-inline-layout);
+  }
+
+  .section__intro {
+    margin-top: var(--rs-gutter);
+    max-width: 50ch;
+  }
+
+  .section--howto {
+    padding-left: var(--rs-inline-layout);
+  } 
+
+  .header__logos {
+    display: flex;
+    align-items: center;
+  }
+  .header__logo {
+    width: 15.3rem;
+  }
+
+  .footer {
+    background: var(--rc-footer);
+    color: var(--rc-onFooter);
+
+    border-top-left-radius: var(--rs-border-radius);
+    border-top-right-radius: var(--rs-border-radius);
+  }
+
+  .pill {
+    background: var(--rc-pillBackground);
+    color: var(--rc-onPillBackground);
+    border-radius: var(--rs-border-radius);
+    padding: calc(var(--rs-gutter) * .3) calc(var(--rs-gutter) * .4);
+    margin-bottom: var(--rs-gutter);
+    display: block;
+    font-size: var(--rst-pill);
+    text-transform: uppercase;
+    width: max-content;
+  }
+
+  .steps {
+    counter-reset: section;
+    margin-top: var(--rs-stack-section);
+    padding: 0;
+    list-style: none;
+    border-left: var(--rs-line) solid var(--rc-line);
+  }
+
+  .steps__step {
+    position: relative;
+    counter-increment: section;
+    display: flex;
+    gap: var(--rs-gutter);
+    align-items: flex-start;
+    padding-left: var(--rs-gutter--step);
+    padding-top: var(--rs-gutter--step);
+    padding-bottom: var(--rs-gutter--step);
+  }
+
+  .steps__step:last-child {
+    padding-bottom: 0;
+  }
+
+  .steps__step::before {
+    display: block;
+    content: counter(section);
+    width: 4rem;
+    height: 4rem;
+    flex: 0 0 4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 100%;
+    box-shadow: inset 0 0 0 var(--rs-line) var(--rc-cardBackground);
+  }
+
+  .steps__step + .steps__step::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: var(--rs-line);
+    background: var(--rc-line);
+    width: calc(var(--rs-gutter--step) * 1.5);
+  }
+  .steps__title {
+    margin-bottom: var(--rs-gutter);
+    margin-top: 0;
+    flex: 0 0 35%;
+  }
+
+  .steps__body {
+    position: relative;
+    padding: var(--rs-gutter-body--bezel) var(--rs-gutter--step);
+    background: var(--rc-cardBackground);
+    margin: 0;
+    border-radius: var(--rs-border-radius);
+    border-top-left-radius: 0;
+  }
+
+  .steps__body::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--rs-border-radius);
+    height: var(--rs-border-radius);
+    background: var(--rc-cardBackground);
+    transform: translateX(-100%);
+    clip-path: polygon(0 0, 100% 0, 100% 100%);
+  }
+
+  .card {
+    background: var(--rc-cardBackground);
+    color: var(--rc-onCardBackground);
+    border-radius: var(--rs-border-radius);
+    padding: var(--rs-gutter) 20%;
+    text-align: center;
+  }
+
+  .card--highlighted {
+    background: var(--rc-cardBackground--highlight);
+    color: var(--rc-onCardBackground--highlight);
+  }
+
+  .card--intro {
+    background: var(--rc-cardBackground--inverted);
+    color: var(--rc-onCardBackground--inverted);
+    padding: calc(var(--rs-gutter) * 4) var(--rs-inline-layout) calc(var(--rs-gutter) * 2);
+    margin-bottom: var(--rs-gutter);
+    text-align: left;
+
+    display: flex;
+    gap: calc(4 * var(--rs-gutter));
+  }
+
+  .card__text {
+    flex: 0 0 50%;
+  }
+
+  .innovation-cards {
+    display: grid;
+    grid-template-columns: calc(55% - var(--rs-gutter)) 45%;
+    gap: var(--rs-gutter);
+    margin-top: var(--rs-stack-section);
+  }
+
+  .card__image {
+    width: 50%;
+    height: auto;
+    flex: 0 0 40%;
   }
 </style>
