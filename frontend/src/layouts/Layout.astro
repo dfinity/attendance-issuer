@@ -293,6 +293,25 @@ const { title } = Astro.props;
   }
   .header__logo {
     width: 15.3rem;
+    margin-right: var(--rs-gutter);
+    position: relative;
+  }
+
+  .header__logo + .header__logo {
+    margin-right: 0;
+    padding-left: var(--rs-gutter);
+  }
+
+  .header__logo + .header__logo::before {
+    position: absolute;
+    content: '';
+    display: block;
+    width: var(--rs-line);
+    left: 0;
+    top: 0;
+    bottom: 0;
+    background: var(--rc-line);
+    opacity: 0.2;
   }
 
   .footer {
