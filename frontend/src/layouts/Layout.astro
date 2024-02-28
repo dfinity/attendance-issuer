@@ -140,6 +140,39 @@ const { title } = Astro.props;
     --design-max-width: 147rem;
   }
 
+  @media screen and (max-width: 640px){
+    :root {
+      --rs-inline-layout: var(--rs-gutter);
+
+          --vs-electron: 1px;
+
+          /*
+          --vs-mouse: 1rem;
+          --vs-rabbit: 1.2rem;
+          --vs-cat: 1.4rem;
+          --vs-fox: 1.6rem;
+          --vs-dog: 1.8rem;
+          --vs-wolf: 2rem;
+          --vs-tiger: 3.6rem;
+          --vs-horse: 5.2rem;
+          --vs-hippo: 8rem;
+          --vs-elephant: 8.2rem;
+          --vs-trex: 14.6rem;
+          */
+          
+          /** rst: reference size text (use these in actual CSS) */
+          --rst-title--main: var(--vs-tiger);
+          --rst-title--section: var(--vs-wolf);
+          --rst-title--subsection: var(--vs-wolf);
+          --rst-body: var(--vs-cat);
+          
+          --rst-pill: var(--vs-rabbit);
+          --rst-button: var(--vs-fox);
+          --rst-footer: var(--vs-rabbit);
+          --rst-header: var(--vs-fox);
+    }
+  }
+
   html {
     font-family: "Circular", system-ui, sans-serif;
     
@@ -180,6 +213,13 @@ const { title } = Astro.props;
     font-size: var(--rst-title--main);
     position: relative;
     margin-top: 0.3em;
+  }
+
+  @media screen and (max-width: 640px){
+
+    .title--main {
+      margin-bottom: 1em;
+    }
   }
  
   .title--main::after {
@@ -254,6 +294,13 @@ const { title } = Astro.props;
     background: var(--rc-navbar);
   }
 
+  @media screen and (max-width: 640px){
+    .button {
+      width: auto;
+    }
+    
+  }
+
   @keyframes gradient {
     0% {
       background-position: 0 0;
@@ -312,6 +359,18 @@ const { title } = Astro.props;
     display: flex;
     gap: var(--rs-gutter);
     align-items: center;
+  }
+
+  @media screen and (max-width: 640px){
+    .header__links {
+      display: none;
+    }
+    .footer {
+      flex-direction: column;
+      gap: var(--rs-gutter);
+      align-items: center;
+    }
+    
   }
 
   .section {
@@ -391,6 +450,7 @@ const { title } = Astro.props;
     padding-bottom: var(--rs-gutter--step);
   }
 
+
   .steps__step:last-child {
     padding-bottom: 0;
   }
@@ -446,6 +506,23 @@ const { title } = Astro.props;
     clip-path: polygon(0 0, 100% 0, 100% 100%);
   }
 
+
+  @media screen and (max-width: 640px){
+    .steps {
+      border-left: none;
+    }
+    .steps__step {
+      padding-left: 0;
+      flex-wrap: wrap;
+    }
+
+    .steps__body::before {
+      clip-path: polygon(0 0, 100% 100%, 0 100%);
+      transform: translateY(-100%);
+    }
+    
+  }
+
   .card {
     background: var(--rc-cardBackground);
     color: var(--rc-onCardBackground);
@@ -480,11 +557,29 @@ const { title } = Astro.props;
     gap: var(--rs-gutter);
     margin-top: var(--rs-stack-section);
   }
-
   .card__image {
     width: 50%;
     height: auto;
     flex: 0 0 40%;
+  }
+
+
+
+  @media screen and (max-width: 640px){
+    .innovation-cards {
+      grid-template-columns: 1fr;
+    }
+    .card--intro {
+      flex-direction: column-reverse;
+      gap: var(--rs-gutter);
+      overflow: clip;
+    }
+    .card__image {
+      width: 80%;
+      flex: 0 0 80%;
+      align-self: flex-end;
+      transform: translateX(20%);
+    }
   }
 
   
