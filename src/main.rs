@@ -435,7 +435,7 @@ fn prepare_credential_jwt(
     alias_tuple: &AliasTuple,
 ) -> Result<String, IssueCredentialError> {
     let since_year = verify_early_adopter_spec_and_get_since_year(credential_spec)
-        .map_err(|e| IssueCredentialError::UnsupportedCredentialSpec(e))?;
+        .map_err(IssueCredentialError::UnsupportedCredentialSpec)?;
     let max_timestamp_s = year_to_max_timestamp_s(since_year);
     EARLY_ADOPTERS.with_borrow(|adopters| {
         verify_principal_registered_and_authorized(alias_tuple.id_dapp, adopters, max_timestamp_s)
