@@ -4,22 +4,110 @@ interface Props {
 }
 
 const { title } = Astro.props;
+
+// import pages for dynamic content
+import Registration from "../pages/registration.astro";
+import Retruning from "../pages/retruning.astro";
+import Success from "../pages/success.astro";
 ---
 
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="description" content="Astro description" />
-  <meta name="viewport" content="width=device-width" />
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <meta name="generator" content={Astro.generator} />
-  <title>{title}</title>
-</head>
-<body>
-  <slot />
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content="Astro description" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+  </head>
+  <body>
+    <div data-app>
+      <slot />
+    </div>
+    <template id="registration">
+      <Registration extendsLayout={false} />
+    </template>
+    <template id="returning">
+      <Retruning extendsLayout={false} />
+    </template>
+    <template id="success">
+      <Success extendsLayout={false} />
+    </template>
+  </body>
 </html>
+
+<script>
+  const dummyLogin = async () => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({ // resolve the promise whith whatever makes sense for your use case
+          status: 200,
+          message: 'Logged in successfully!',
+        });
+      }, 1000);
+    });
+  };
+
+  const dummyRegister = async () => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({ // resolve the promise whith whatever makes sense for your use case
+          status: 200,
+          message: 'Registered successfully!',
+        });
+      }, 1000);
+    });
+  };
+
+  // select the templates for the different pages / states
+  const $templateRegistration = document.getElementById('registration') as HTMLTemplateElement;
+  const $templateReturning = document.getElementById('returning') as HTMLTemplateElement;
+  const $templateSuccess = document.getElementById('success') as HTMLTemplateElement;
+
+  // wrap containing the app
+  const $app = document.querySelector('[data-app]') as HTMLDivElement;
+
+  const handleClick = async (e) => {
+    // make sure the event target is a link
+    const $target = e?.target as HTMLLinkElement;
+    
+    // if the target is not a link make sure the click event is not handled
+    if ($target.matches('[data-login]') || $target.matches('[data-register]')) {
+      // prevent the default behavior of the link
+      e.preventDefault();
+    } else {
+      return;
+    }
+
+    
+    if ($target.matches('[data-login]')) {
+      console.log('do the login');
+      const status = await dummyLogin() as { status: number; message: string }
+
+      if (status.status === 200) {
+        console.log('do the error thingy!');
+        $app.innerHTML = $templateRegistration.innerHTML;
+      }
+    } else if ($target.matches('[data-register]')) {
+      const status = await dummyRegister() as { status: number; message: string }
+
+      if (status.status === 200) {
+        console.log('do the registration thingy!');
+        $app.innerHTML = $templateSuccess.innerHTML;
+      } else {
+        console.log('do the retrun thingy!');
+        $app.innerHTML = $templateReturning.innerHTML;
+      }
+    }
+  }
+
+  document.addEventListener('click', handleClick, {
+    capture: true,
+    passive: true,
+  });
+</script>
+
 <style is:global>
   @font-face {
     font-family: "Circular";
@@ -428,12 +516,10 @@ const { title } = Astro.props;
     margin-right: var(--rs-gutter);
     position: relative;
   }
-
   .logos__logo + .logos__logo {
     margin-right: 0;
     padding-left: var(--rs-gutter);
   }
-
   .logos__logo + .logos__logo::before {
     position: absolute;
     content: '';
@@ -445,9 +531,6 @@ const { title } = Astro.props;
     background: var(--rc-line);
     opacity: 0.2;
   }
-
-
-
   .pill {
     background: var(--rc-pillBackground);
     color: var(--rc-onPillBackground);
@@ -478,7 +561,6 @@ const { title } = Astro.props;
     padding-top: var(--rs-gutter--step);
     padding-bottom: var(--rs-gutter--step);
   }
-
 
   .steps__step:last-child {
     padding-bottom: 0;
@@ -534,7 +616,6 @@ const { title } = Astro.props;
     transform: translateX(-100%);
     clip-path: polygon(0 0, 100% 0, 100% 100%);
   }
-
 
   @media screen and (max-width: 640px){
     .steps {
@@ -641,9 +722,6 @@ const { title } = Astro.props;
     height: auto;
     flex: 0 0 40%;
   }
-
-
-
   @media screen and (max-width: 640px){
     .innovation-cards {
       grid-template-columns: 1fr;
@@ -660,6 +738,4 @@ const { title } = Astro.props;
       transform: translateX(20%);
     }
   }
-
-  
 </style>
