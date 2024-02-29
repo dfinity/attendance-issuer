@@ -102,9 +102,10 @@ import Success from "../pages/success.astro";
     }
   }
 
-  document.addEventListener('click', handleClick, true);
-
-
+  document.addEventListener('click', handleClick, {
+    capture: true,
+    passive: true,
+  });
 </script>
 
 <style is:global>
