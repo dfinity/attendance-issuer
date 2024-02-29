@@ -1,0 +1,26 @@
+---
+import Layout from "../layouts/Layout.astro";
+import content from "../contents/index.json";
+import Logos from "../components/Logos.astro";
+---
+
+<Layout title={content.meta.title}>
+  <main class="design-width">
+    <article class="card card--split">
+      <div class="card__message">
+        <Logos />
+        <div class="card__image">
+          <img src={content.mainImage} alt="Internet Identity" />
+        </div>
+        <h1 class="title title--success">{content.confirmationTitle}</h1>
+      </div>
+      <div class="card__cta">
+        <h2 class="title title--sub">{content.confirmationTitle2}</h2>
+        <p>{content.confirmationLead}</p>
+        <a href={content.openchaturl} class="button button--inverted button--oc">{content.confirmationButton}</a>
+        <a href={content.openchaturl} class="link">{content.confirmationLink}</a>
+      </div>
+    </article>
+  </main>
+</Layout>
+

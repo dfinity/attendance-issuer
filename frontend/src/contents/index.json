@@ -26,7 +26,7 @@
 
   "mainTitle": "Become an Early Adopter",
   "mainLead": "Get the Early Adopter credential by connecting with Internet Identity, showcasing your status as one of the first to test advanced identity tech on the Internet Computer. Use this credential to join an exclusive OpenChat room and unlock future prizes.",
-  "mainImage": "illu-homepage.webp",
+  "mainImage": "/illu-homepage.webp",
 
   "howtoChip": "How it Works",
   "howtoTitle": "Use a verifiable credential to access an exclusive OpenChat group",
@@ -55,25 +55,25 @@
     {
       "title": "Verifiable",
       "body": "A verifiable credential is a piece of data that’s source, integrity, validity, and ownership can be instantly verified.",
-      "image": "illu-verifiable.webp",
+      "image": "/illu-verifiable.webp",
       "type": "regular"
     },
     {
       "title": "Private",
       "body": "Whenever a user shares a credential with an app, a new identifier is created for the user, which prevents apps from tracking users across the web.",
-      "image": "illu-private.webp",
+      "image": "/illu-private.webp",
       "type": "regular"
     },
     {
       "title": "Reusable",
       "body": "Users can share credentials with apps on a need-to-know basis to authorize their access to exclusive services.",
-      "image": "illu-reusable.webp",
+      "image": "/illu-reusable.webp",
       "type": "regular"
     },
     {
       "title": "Secure",
       "body": "Verifiable credentials are stored 100% on-chain, which safeguards businesses and users from the potential liability of data breaches and fraud.",
-      "image": "illu-secure.webp",
+      "image": "/illu-secure.webp",
       "type": "highlighted"
     }
   ],
@@ -87,10 +87,14 @@
   "confirmationLead": "Use this credential to join an exclusive chatroom on Openchat.",
   "confirmationButton": "Join the OpenChat group",
   "confirmationLink": "or view credential on Internet Identity",
+  "confirmationImg": "/illu-confirmation.webp",
 
   "returningTitle": "You’ve been here before!",
   "returningTitle2": "It looks like you’ve earned the Early Adopter credential.",
   "returningLead": "Use this credential to join an exclusive chatroom on Openchat.",
   "returningButton": "Open the OpenChat group",
-  "returningLink": "or view credential on Internet Identity"
+  "returningLink": "or view credential on Internet Identity",
+  "returningImg": "/illu-star.webp",
+
+  "openchaturl": "https://oc.app/communities/early-adopter-campaign"
 }
