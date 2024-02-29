@@ -29,6 +29,9 @@ jobs:
     - name: Check Format
       run: cargo fmt --all -- --check
 
+    - name: Build The Canister
+      run: ./build.sh
+
     - name: Clippy
       run: cargo clippy --tests --benches -- -D clippy::all -D warnings
 
