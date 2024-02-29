@@ -68,7 +68,7 @@ import Success from "../pages/success.astro";
   // wrap containing the app
   const $app = document.querySelector('[data-app]') as HTMLDivElement;
 
-  const handleClick = async (e) => {
+  const handleClick = async (e: MouseEvent) => {
     // make sure the event target is a link
     const $target = e?.target as HTMLLinkElement;
     
