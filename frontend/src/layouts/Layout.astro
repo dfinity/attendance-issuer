@@ -299,6 +299,7 @@ const { title } = Astro.props;
     border-radius: 999px;
     padding: calc(var(--rs-gutter) * .5) var(--rs-gutter);
     background: var(--rc-navbar);
+    pointer-events: none;
   }
 
   .button--inverted {
@@ -332,6 +333,10 @@ const { title } = Astro.props;
   .design-width {
     max-width: var(--design-max-width);
     margin: 0 auto;
+  }
+
+  .design-width--tight { 
+    max-width: calc(var(--design-max-width) * .35);
   }
 
   .section-top {
@@ -407,7 +412,12 @@ const { title } = Astro.props;
 
   .section--howto {
     padding-left: var(--rs-inline-layout);
-  } 
+  }
+
+  .logo {
+    width: max(50%, 30rem);
+    margin-bottom: var(--rs-gutter-body--bezel);
+  }
 
   .logos {
     display: flex;
