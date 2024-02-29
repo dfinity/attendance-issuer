@@ -86,6 +86,9 @@ const { title } = Astro.props;
     
     --rc-buttonBackground: var(--vg-lovepotion--repeating);
     --rc-onButtonBackground: var(--vc-snow);
+
+    --rc-buttonBackground--inverted: var(--vc-snow);
+    --rc-onButtonBackground--inverted: var(--vc-eggplant);
     
     --rc-link: var(--vc-mika);
     --rc-line: var(--vc-chrome);
@@ -201,14 +204,22 @@ const { title } = Astro.props;
     margin-top: 0.3em;
   }
 
-  @media screen and (max-width: 640px){
+  .title--success {
+    font-size: var(--rst-title--section));
+    position: relative;
+    margin-top: 0.3em;
+    width: max-content;
+    margin: 0 auto 1em;
+  }
 
+  @media screen and (max-width: 640px){
     .title--main {
       margin-bottom: 1em;
     }
   }
  
-  .title--main::after {
+  .title--main::after,
+  .title--success::after {
     position: absolute;
     top: 100%;
     left: -2.5%;
@@ -258,6 +269,16 @@ const { title } = Astro.props;
     pointer-events: none;
   }
 
+  .button--oc {
+    margin-bottom: var(--rs-stack-button);
+  }
+
+  .button--oc::after {
+    background-image: url('/ic-logo.webp');
+    width: 3rem;
+    height: 3rem;
+  }
+
   .button:hover {
     animation: gradient 1.5s ease-in;
     box-shadow: inset 0 0 0 calc(var(--rs-line--fat) * 2) rgba(255 255 255 / .2);
@@ -280,11 +301,23 @@ const { title } = Astro.props;
     background: var(--rc-navbar);
   }
 
+  .button--inverted {
+    background: var(--rc-buttonBackground--inverted);
+    color: var(--rc-onButtonBackground--inverted);
+  }
+
   @media screen and (max-width: 640px){
     .button {
       width: auto;
     }
-    
+  }
+
+  .link {
+    text-decoration: underline;
+  }
+
+  .link:hover {
+    text-decoration: none;
   }
 
   @keyframes gradient {
@@ -531,6 +564,56 @@ const { title } = Astro.props;
 
     display: flex;
     gap: calc(4 * var(--rs-gutter));
+  }
+
+  .card--split {
+    display: flex;
+    margin: 0;
+    background: var(--rc-cardBackground--inverted);
+    color: var(--rc-onCardBackground--inverted);
+    text-align: center;
+    padding: 0;
+  }
+
+  .card__message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--rs-gutter);
+    box-sizing: border-box;
+  }
+
+  .card__cta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    padding: calc(var(--rs-gutter) * 4) calc(var(--rs-gutter) * 5);
+    flex: 0 1 25%;
+
+    background: var(--rc-cardBackground--highlight);
+    color: var(--rc-onCardBackground--highlight);
+    text-align: left;
+    border-radius: var(--rs-border-radius);
+    box-sizing: border-box;
+  }
+
+  .card--split .card__image {
+    width: 50%;
+    height: auto;
+    flex: 0 0 50%;
+    transform: translate(0);
+    align-self: center;
+  }
+
+  @media screen and (max-width: 640px){
+    .card--split {
+      flex-direction: column;
+      gap: var(--rs-gutter);
+    }
+    .card__cta {
+      padding: calc(var(--rs-gutter) * 4) 10%;
+    }
   }
 
   .card__text {
