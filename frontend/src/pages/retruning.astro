@@ -2,9 +2,16 @@
 import Layout from "../layouts/Layout.astro";
 import content from "../contents/index.json";
 import Logos from "../components/Logos.astro";
+
+interface Props {
+  extendsLayout?: boolean;
+}
+
+const { extendsLayout = true } = Astro.props;
+const Wrapper = extendsLayout ? Layout : Fragment;
 ---
 
-<Layout title={content.meta.title}>
+<Wrapper title={content.meta.title}>
   <main class="design-width">
     <article class="card card--split">
       <div class="card__message">
@@ -25,4 +32,4 @@ import Logos from "../components/Logos.astro";
       </div>
     </article>
   </main>
-</Layout>
+</Wrapper>

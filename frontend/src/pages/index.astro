@@ -86,12 +86,3 @@ import Logos from "../components/Logos.astro";
   </div>
 </Layout>
 
-<script>
-  document.addEventListener('click', (e) => {
-    const $target = e?.target as HTMLLinkElement;
-    if (!$target.matches('[data-login]')) return;
-
-    e.preventDefault();
-    console.log('do the login');
-  }, true);
-</script>
