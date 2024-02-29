@@ -7,12 +7,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-# local dependencies
+# IC/II dependencies
 canister_sig_util = { git="https://github.com/dfinity/internet-identity", rev="facc954481eaf79c70d1182d128773254a5cfb81" }
 internet_identity_interface = { git="https://github.com/dfinity/internet-identity", rev="facc954481eaf79c70d1182d128773254a5cfb81" }
 vc_util = { git="https://github.com/dfinity/internet-identity", rev="facc954481eaf79c70d1182d128773254a5cfb81" }
 asset_util = { git="https://github.com/dfinity/internet-identity", rev="facc954481eaf79c70d1182d128773254a5cfb81" }
-# ic dependencies
 candid = "0.10"
 ic-cdk = "0.12"
 ic-cdk-macros = "0.8"
@@ -26,7 +25,6 @@ serde_bytes = "0.11"
 serde_cbor = "0.11"
 serde_json = "1"
 sha2 = "^0.10" # set bound to match ic-certified-map bound
-strfmt = "0.2"
 lazy_static = "1.4"
 include_dir = "0.7"
 

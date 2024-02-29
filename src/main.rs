@@ -7,6 +7,7 @@ use ic_certification::{fork_hash, labeled_hash, pruned, Hash};
 use ic_stable_structures::storable::Bound;
 use ic_stable_structures::{DefaultMemoryImpl, RestrictedMemory, StableCell, Storable};
 use include_dir::{include_dir, Dir};
+use lazy_static::lazy_static;
 use serde_bytes::ByteBuf;
 use sha2::{Digest, Sha256};
 use std::borrow::Cow;
@@ -32,7 +33,7 @@ type Memory = RestrictedMemory<DefaultMemoryImpl>;
 type ConfigCell = StableCell<IssuerConfig, Memory>;
 
 const ISSUER_URL: &str = "https://internetidentity.vc";
-pub const CREDENTIAL_URL_PREFIX: &str = "data:text/plain;charset=UTF-8,";
+const CREDENTIAL_URL_PREFIX: &str = "data:text/plain;charset=UTF-8,";
 
 const MINUTE_NS: u64 = 60 * 1_000_000_000;
 const PROD_II_CANISTER_ID: &str = "rdmx6-jaaaa-aaaaa-aaadq-cai";
@@ -65,6 +66,12 @@ thread_local! {
 
     // Assets for the management app
     static ASSETS: RefCell<CertifiedAssets> = RefCell::new(CertifiedAssets::default());
+}
+
+lazy_static! {
+    // Seed and public key used for signing the credentials.
+    static ref CANISTER_SIG_SEED: Vec<u8> = hash_bytes("EarlyAdopter").to_vec();
+    static ref CANISTER_SIG_PK: CanisterSigPublicKey = CanisterSigPublicKey::new(ic_cdk::id(), CANISTER_SIG_SEED.clone());
 }
 
 /// Reserve the first stable memory page for the configuration stable cell.
@@ -136,6 +143,7 @@ fn post_upgrade(init_arg: Option<IssuerInit>) {
     init(init_arg);
 }
 
+// TODO: restrict or remove `configure()`.
 #[update]
 #[candid_method]
 fn configure(config: IssuerInit) {
@@ -187,16 +195,13 @@ async fn prepare_credential(
         Ok(credential) => credential,
         Err(err) => return Result::<PreparedCredentialData, IssueCredentialError>::Err(err),
     };
-    let seed = calculate_seed(&alias_tuple.id_alias);
-    let canister_id = ic_cdk::id();
-    let canister_sig_pk = CanisterSigPublicKey::new(canister_id, seed.to_vec());
     let signing_input =
-        vc_signing_input(&credential_jwt, &canister_sig_pk).expect("failed getting signing_input");
+        vc_signing_input(&credential_jwt, &CANISTER_SIG_PK).expect("failed getting signing_input");
     let msg_hash = vc_signing_input_hash(&signing_input);
 
     SIGNATURES.with(|sigs| {
         let mut sigs = sigs.borrow_mut();
-        sigs.add_signature(seed.as_ref(), msg_hash);
+        sigs.add_signature(&CANISTER_SIG_SEED, msg_hash);
     });
     update_root_hash();
     Ok(PreparedCredentialData {
@@ -221,19 +226,14 @@ fn update_root_hash() {
 #[query]
 #[candid_method(query)]
 fn get_credential(req: GetCredentialRequest) -> Result<IssuedCredentialData, IssueCredentialError> {
-    let alias_tuple = match authorize_vc_request(&req.signed_id_alias, &caller(), time().into()) {
-        Ok(alias_tuple) => alias_tuple,
-        Err(err) => return Result::<IssuedCredentialData, IssueCredentialError>::Err(err),
+    if let Err(err) = authorize_vc_request(&req.signed_id_alias, &caller(), time().into()) {
+        return Result::<IssuedCredentialData, IssueCredentialError>::Err(err);
     };
     if let Err(err) = verify_early_adopter_spec_and_get_since_year(&req.credential_spec) {
         return Result::<IssuedCredentialData, IssueCredentialError>::Err(
             IssueCredentialError::UnsupportedCredentialSpec(err),
         );
     }
-    let subject_principal = alias_tuple.id_alias;
-    let seed = calculate_seed(&subject_principal);
-    let canister_id = ic_cdk::id();
-    let canister_sig_pk = CanisterSigPublicKey::new(canister_id, seed.to_vec());
     let prepared_context = match req.prepared_context {
         Some(context) => context,
         None => {
@@ -251,12 +251,16 @@ fn get_credential(req: GetCredentialRequest) -> Result<IssuedCredentialData, Iss
         }
     };
     let signing_input =
-        vc_signing_input(&credential_jwt, &canister_sig_pk).expect("failed getting signing_input");
+        vc_signing_input(&credential_jwt, &CANISTER_SIG_PK).expect("failed getting signing_input");
     let message_hash = vc_signing_input_hash(&signing_input);
     let sig_result = SIGNATURES.with(|sigs| {
         let sig_map = sigs.borrow();
         let certified_assets_root_hash = ASSETS.with_borrow(|assets| assets.root_hash());
-        sig_map.get_signature_as_cbor(&seed, message_hash, Some(certified_assets_root_hash))
+        sig_map.get_signature_as_cbor(
+            &CANISTER_SIG_SEED,
+            message_hash,
+            Some(certified_assets_root_hash),
+        )
     });
     let sig = match sig_result {
         Ok(sig) => sig,
@@ -270,7 +274,7 @@ fn get_credential(req: GetCredentialRequest) -> Result<IssuedCredentialData, Iss
         }
     };
     let vc_jws =
-        vc_jwt_to_jws(&credential_jwt, &canister_sig_pk, &sig).expect("failed constructing JWS");
+        vc_jwt_to_jws(&credential_jwt, &CANISTER_SIG_PK, &sig).expect("failed constructing JWS");
     Result::<IssuedCredentialData, IssueCredentialError>::Ok(IssuedCredentialData { vc_jws })
 }
 
@@ -363,6 +367,7 @@ fn register_early_adopter() -> Result<EarlyAdopterStatus, EarlyAdopterError> {
 #[query]
 #[candid_method(query)]
 pub fn http_request(req: HttpRequest) -> HttpResponse {
+    // TODO: add `/metrics`-endpoint
     let parts: Vec<&str> = req.url.split('?').collect();
     let path = parts[0];
     let sigs_root_hash =
@@ -394,20 +399,6 @@ fn static_headers() -> Vec<(String, String)> {
 }
 
 fn main() {}
-
-fn calculate_seed(principal: &Principal) -> Hash {
-    // IMPORTANT: In a real dapp the salt should be set to a random value.
-    let dummy_salt = [5u8; 32];
-
-    let mut bytes: Vec<u8> = vec![];
-    bytes.push(dummy_salt.len() as u8);
-    bytes.extend_from_slice(&dummy_salt);
-
-    let principal_bytes = principal.as_slice();
-    bytes.push(principal_bytes.len() as u8);
-    bytes.extend(principal_bytes);
-    hash_bytes(bytes)
-}
 
 fn verified_early_adopter_credential(
     subject_principal: Principal,
@@ -458,7 +449,7 @@ fn prepare_credential_jwt(
 fn verify_principal_registered_and_authorized(
     user: Principal,
     adopters: &HashMap<Principal, EarlyAdopterData>,
-    max_timestamp: u32,
+    max_timestamp_s: u32,
 ) -> Result<(), IssueCredentialError> {
     let Some(ea_data) = adopters.get(&user) else {
         println!(
@@ -470,12 +461,12 @@ fn verify_principal_registered_and_authorized(
             user.to_text()
         )));
     };
-    if ea_data.joined_timestamp_s < max_timestamp {
+    if ea_data.joined_timestamp_s < max_timestamp_s {
         Ok(())
     } else {
         println!(
-            "*** principal {} it is not authorized for early adopter credential",
-            user.to_text(),
+            "*** {} is not authorized for EarlyAdopter credential (joined_timestamp: {}, max_timestamp: {})",
+            user.to_text(), ea_data.joined_timestamp_s, max_timestamp_s
         );
         Err(IssueCredentialError::UnauthorizedSubject(format!(
             "unauthorized principal {}",
