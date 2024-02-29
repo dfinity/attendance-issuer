@@ -41,7 +41,7 @@ import Success from "../pages/success.astro";
   const dummyLogin = async () => {
     return new Promise((resolve) => {
       setTimeout(() => {
-        resolve({
+        resolve({ // resolve the promise whith whatever makes sense for your use case
           status: 200,
           message: 'Logged in successfully!',
         });
@@ -52,7 +52,7 @@ import Success from "../pages/success.astro";
   const dummyRegister = async () => {
     return new Promise((resolve) => {
       setTimeout(() => {
-        resolve({
+        resolve({ // resolve the promise whith whatever makes sense for your use case
           status: 200,
           message: 'Registered successfully!',
         });
@@ -60,21 +60,27 @@ import Success from "../pages/success.astro";
     });
   };
 
+  // select the templates for the different pages / states
   const $templateRegistration = document.getElementById('registration') as HTMLTemplateElement;
   const $templateReturning = document.getElementById('returning') as HTMLTemplateElement;
   const $templateSuccess = document.getElementById('success') as HTMLTemplateElement;
 
-  document.addEventListener('click', async (e) => {
+  // wrap containing the app
+  const $app = document.querySelector('[data-app]') as HTMLDivElement;
+
+  const handleClick = async (e) => {
+    // make sure the event target is a link
     const $target = e?.target as HTMLLinkElement;
     
+    // if the target is not a link make sure the click event is not handled
     if ($target.matches('[data-login]') || $target.matches('[data-register]')) {
+      // prevent the default behavior of the link
       e.preventDefault();
     } else {
       return;
     }
 
-    const $app = document.querySelector('[data-app]') as HTMLDivElement;
-
+    
     if ($target.matches('[data-login]')) {
       console.log('do the login');
       const status = await dummyLogin() as { status: number; message: string }
@@ -84,7 +90,7 @@ import Success from "../pages/success.astro";
         $app.innerHTML = $templateRegistration.innerHTML;
       }
     } else if ($target.matches('[data-register]')) {
-      const status = await dummyLogin() as { status: number; message: string }
+      const status = await dummyRegister() as { status: number; message: string }
 
       if (status.status === 200) {
         console.log('do the registration thingy!');
@@ -94,7 +100,9 @@ import Success from "../pages/success.astro";
         $app.innerHTML = $templateReturning.innerHTML;
       }
     }
-  }, true);
+  }
+
+  document.addEventListener('click', handleClick, true);
 
 
 </script>
