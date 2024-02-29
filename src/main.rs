@@ -489,7 +489,7 @@ fn hash_bytes(value: impl AsRef<[u8]>) -> Hash {
 candid::export_service!();
 
 // Assets
-static ASSET_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/dist");
+static ASSET_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/frontend/dist");
 pub fn init_assets() {
     ASSETS.with_borrow_mut(|assets| {
         *assets = CertifiedAssets::certify_assets(

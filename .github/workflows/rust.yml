@@ -36,6 +36,4 @@ jobs:
       # https://users.rust-lang.org/t/check-if-the-cargo-lock-is-up-to-date-without-building-anything/91048/5
     - name: Cargo Lockfile Check
       run: cargo update --workspace --locked
-             
-    - name: Build
-      run: cargo build --verbose
+

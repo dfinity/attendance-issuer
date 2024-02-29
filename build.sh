@@ -5,6 +5,13 @@ set -euo pipefail
 EARLY_ADOPTER_ISSUER_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$EARLY_ADOPTER_ISSUER_DIR"
 
+
+# Build the frontend
+cd frontend/
+npm run build 
+cd ../
+
+# Build the canister
 cargo build --release --target wasm32-unknown-unknown --manifest-path ./Cargo.toml -j1
 ic-wasm "target/wasm32-unknown-unknown/release/early_adopter_issuer.wasm" -o "./early_adopter_issuer.wasm" shrink
 ic-wasm early_adopter_issuer.wasm -o early_adopter_issuer.wasm metadata candid:service -f early_adopter_issuer.did -v public
