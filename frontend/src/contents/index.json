@@ -87,7 +87,7 @@
   "confirmationLead": "Use this credential to join an exclusive chatroom on Openchat.",
   "confirmationButton": "Join the OpenChat group",
   "confirmationLink": "or view credential on Internet Identity",
-  "confirmationImg": "/illu-confirmation.webp",
+  "confirmationImg": "/illu-success.webp",
 
   "returningTitle": "You’ve been here before!",
   "returningTitle2": "It looks like you’ve earned the Early Adopter credential.",
