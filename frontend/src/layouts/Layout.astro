@@ -6,7 +6,6 @@ interface Props {
 const { title } = Astro.props;
 
 // import pages for dynamic content
-import Registration from "../pages/registration.astro";
 import Retruning from "../pages/retruning.astro";
 import Success from "../pages/success.astro";
 ---
@@ -25,9 +24,6 @@ import Success from "../pages/success.astro";
     <div data-app>
       <slot />
     </div>
-    <template id="registration">
-      <Registration extendsLayout={false} />
-    </template>
     <template id="returning">
       <Retruning extendsLayout={false} />
     </template>
@@ -38,17 +34,51 @@ import Success from "../pages/success.astro";
 </html>
 
 <script>
-  const dummyLogin = async () => {
+  import { AuthClient } from "@dfinity/auth-client";
+
+  const AUTH_POPUP_WIDTH = 576;
+  const AUTH_POPUP_HEIGHT = 625;
+  // Reference Juno: https://github.com/junobuild/juno/blob/main/src/frontend/src/lib/utils/window.utils.ts#L4
+  export const popupCenter = ({
+    width,
+    height
+  }: {
+    width: number;
+    height: number;
+  }): string | undefined => {
+    if (window === null || window.top === null) {
+      return undefined;
+    }
+
+    const {
+      top: { innerWidth, innerHeight }
+    } = window;
+
+    const y = innerHeight / 2 + screenY - height / 2;
+    const x = innerWidth / 2 + screenX - width / 2;
+
+    return `toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=yes, resizable=no, copyhistory=no, width=${width}, height=${height}, top=${y}, left=${x}`;
+  };
+
+  const authClient = await AuthClient.create();
+  const identityProvider = import.meta.env.PROD ? "https://identity.ic0.app/" : import.meta.env.PUBLIC_INTERNET_IDENTITY_URL;
+
+  const dummyLogin = () => {
     return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({ // resolve the promise whith whatever makes sense for your use case
-          status: 200,
-          message: 'Logged in successfully!',
-        });
-      }, 1000);
+      authClient.login({
+        onSuccess: () => {
+          resolve({ status: 200, message: 'Logged in successfully!' });
+        },
+        onError: (err) => {
+          resolve({ status: 400, message: err });
+        },
+        identityProvider,
+        windowOpenerFeatures: popupCenter({ width: AUTH_POPUP_WIDTH, height: AUTH_POPUP_HEIGHT })
+      })
     });
   };
 
+  // TODO: Remove if we remove the registration.astro file.
   const dummyRegister = async () => {
     return new Promise((resolve) => {
       setTimeout(() => {
@@ -61,7 +91,6 @@ import Success from "../pages/success.astro";
   };
 
   // select the templates for the different pages / states
-  const $templateRegistration = document.getElementById('registration') as HTMLTemplateElement;
   const $templateReturning = document.getElementById('returning') as HTMLTemplateElement;
   const $templateSuccess = document.getElementById('success') as HTMLTemplateElement;
 
@@ -73,6 +102,7 @@ import Success from "../pages/success.astro";
     const $target = e?.target as HTMLLinkElement;
     
     // if the target is not a link make sure the click event is not handled
+    // TODO: Remove `data-register` if we remove the registration.astro file
     if ($target.matches('[data-login]') || $target.matches('[data-register]')) {
       // prevent the default behavior of the link
       e.preventDefault();
@@ -86,9 +116,10 @@ import Success from "../pages/success.astro";
       const status = await dummyLogin() as { status: number; message: string }
 
       if (status.status === 200) {
-        console.log('do the error thingy!');
-        $app.innerHTML = $templateRegistration.innerHTML;
+        $app.innerHTML = $templateSuccess.innerHTML;
       }
+      // TODO: Add error management
+      // TODO: Remove if we remove the registration.astro file
     } else if ($target.matches('[data-register]')) {
       const status = await dummyRegister() as { status: number; message: string }
 

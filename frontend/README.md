@@ -23,7 +23,15 @@ There's nothing special about `src/components/`, but that's where we like to put
 
 Any static assets, like images, can be placed in the `public/` directory.
 
-## 🧞 Commands
+## Development
+
+### Environment Variables
+
+Create a `.env` file in the same directory as this README and set the env var `PUBLIC_INTERNET_IDENTITY_URL` to your development identity provider.
+
+In production, it defaults to `https://identity.ic0.app/`.
+
+### 🧞 Commands
 
 All commands are run from the root of the project, from a terminal:
 
