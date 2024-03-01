@@ -1,0 +1,18 @@
+{
+  "dfx": "0.15.3",
+  "canisters": {
+    "early_adopter": {
+      "type": "custom",
+      "candid": "early_adopter_issuer.did",
+      "wasm": "early_adopter_issuer.wasm.gz",
+      "build": "./build.sh",
+      "shrink": false
+    }
+  },
+  "defaults": {
+    "build": {
+      "packtool": ""
+    }
+  },
+  "version": 1
+}
