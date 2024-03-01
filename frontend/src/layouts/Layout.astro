@@ -35,6 +35,22 @@ import Success from "../pages/success.astro";
 
 <script>
   import { AuthClient } from "@dfinity/auth-client";
+  import { Actor, HttpAgent, type ActorMethod } from "@dfinity/agent";
+
+  type RegisterEarlyAdopterResponse =
+    | { Ok: { joined_timestamp_s: number } }
+    | { Err: { Internal: string }}
+  
+  // @ts-ignore - The interface of the whoami canister
+  const webapp_idl = ({ IDL }) => {
+    const EarlyAdopterStatus = IDL.Record({ 'joined_timestamp_s' : IDL.Nat32 });
+    const EarlyAdopterError = IDL.Variant({ 'Internal' : IDL.Text });
+    return IDL.Service({ register_early_adopter: IDL.Func([], [IDL.Variant({ 'Ok' : EarlyAdopterStatus, 'Err' : EarlyAdopterError })], []) });
+  };
+
+  export interface _SERVICE {
+    register_early_adopter: ActorMethod<[], RegisterEarlyAdopterResponse>;
+  }
 
   const AUTH_POPUP_WIDTH = 576;
   const AUTH_POPUP_HEIGHT = 625;
@@ -62,12 +78,28 @@ import Success from "../pages/success.astro";
 
   const authClient = await AuthClient.create();
   const identityProvider = import.meta.env.PROD ? "https://identity.ic0.app/" : import.meta.env.PUBLIC_INTERNET_IDENTITY_URL;
+  const host = import.meta.env.DEV ? import.meta.env.PUBLIC_HOST : undefined;
+  const canisterId = import.meta.env.PUBLIC_OWN_CANISTER_ID;
 
-  const dummyLogin = () => {
+  const login = () => {
     return new Promise((resolve) => {
       authClient.login({
-        onSuccess: () => {
-          resolve({ status: 200, message: 'Logged in successfully!' });
+        onSuccess: async () => {
+          const identity = authClient.getIdentity();
+          const agent = new HttpAgent({ identity, host });
+          if (import.meta.env.DEV) {
+            await agent.fetchRootKey();
+          }
+          const webapp: _SERVICE = Actor.createActor(webapp_idl, {
+            agent,
+            canisterId,
+          });
+          const registerResponse = await webapp.register_early_adopter();
+          if ("Ok" in registerResponse) {
+            resolve({ status: 200, message: 'Logged in successfully!' });
+          } else {
+            resolve({ status: 400, message: registerResponse.Err.Internal });
+          }
         },
         onError: (err) => {
           resolve({ status: 400, message: err });
@@ -101,19 +133,8 @@ import Success from "../pages/success.astro";
     // make sure the event target is a link
     const $target = e?.target as HTMLLinkElement;
     
-    // if the target is not a link make sure the click event is not handled
-    // TODO: Remove `data-register` if we remove the registration.astro file
-    if ($target.matches('[data-login]') || $target.matches('[data-register]')) {
-      // prevent the default behavior of the link
-      e.preventDefault();
-    } else {
-      return;
-    }
-
-    
     if ($target.matches('[data-login]')) {
-      console.log('do the login');
-      const status = await dummyLogin() as { status: number; message: string }
+      const status = await login() as { status: number; message: string }
 
       if (status.status === 200) {
         $app.innerHTML = $templateSuccess.innerHTML;
@@ -365,6 +386,7 @@ import Success from "../pages/success.astro";
     background-size: 200% 100%;
     color: var(--rc-onButtonBackground);
     border-radius: var(--rs-border-radius--small);
+    border: 0;
     font-size: var(--rst-button);
     box-shadow: inset 0 0 0 var(--rs-line--fat) rgba(255 255 255 / .5);
     padding: calc(var(--rs-gutter) * .75) calc(2 * var(--rs-gutter) + 4rem) calc(var(--rs-gutter) * .75) var(--rs-gutter);
