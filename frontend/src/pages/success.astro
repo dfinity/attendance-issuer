@@ -6,7 +6,7 @@ import Logos from "../components/Logos.astro";
 interface Props {
   extendsLayout?: boolean;
 }
-
+// TODO: Remove extra logic if this is never used as a standalone page.
 const { extendsLayout = true } = Astro.props;
 const Wrapper = extendsLayout ? Layout : Fragment;
 ---
