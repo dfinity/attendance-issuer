@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "astro check && astro build",
+    "build": "astro check && astro build --mode development",
+    "build:production": "astro check && astro build --mode production",
     "preview": "astro preview",
     "astro": "astro",
     "lint": "npm run lint:prettier && npm run lint:eslint",

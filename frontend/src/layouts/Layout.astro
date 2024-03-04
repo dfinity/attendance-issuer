@@ -84,8 +84,8 @@ import Success from "../pages/success.astro";
   };
 
   const authClient = await AuthClient.create();
-  const identityProvider = import.meta.env.PROD ? "https://identity.ic0.app/" : import.meta.env.PUBLIC_INTERNET_IDENTITY_URL;
-  const host = import.meta.env.DEV ? import.meta.env.PUBLIC_HOST : undefined;
+  const identityProvider = import.meta.env.PUBLIC_INTERNET_IDENTITY_URL;
+  const host = import.meta.env.PUBLIC_HOST;
   const canisterId = import.meta.env.PUBLIC_OWN_CANISTER_ID;
 
   const busyScreen = document.getElementById('busy') as HTMLDivElement;
