@@ -9,6 +9,14 @@
       "shrink": false
     }
   },
+  "networks": {
+    "devenv_llorenc": {
+      "providers": [
+        "https://llorenc-ingress.devenv.dfinity.network"
+      ],
+      "type": "persistent"
+    }
+  },
   "defaults": {
     "build": {
       "packtool": ""
