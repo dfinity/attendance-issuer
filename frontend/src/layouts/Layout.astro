@@ -24,6 +24,13 @@ import Success from "../pages/success.astro";
     <div data-app>
       <slot />
     </div>
+    <div id="busy" class="busy hide">
+      <div class="content">
+        <div class="spinner-wrapper">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
     <template id="returning">
       <Retruning extendsLayout={false} />
     </template>
@@ -81,8 +88,13 @@ import Success from "../pages/success.astro";
   const host = import.meta.env.DEV ? import.meta.env.PUBLIC_HOST : undefined;
   const canisterId = import.meta.env.PUBLIC_OWN_CANISTER_ID;
 
+  const busyScreen = document.getElementById('busy') as HTMLDivElement;
+
   const login = () => {
+
     return new Promise((resolve) => {
+      busyScreen.classList.remove('hide');
+
       authClient.login({
         onSuccess: async () => {
           const identity = authClient.getIdentity();
@@ -95,6 +107,7 @@ import Success from "../pages/success.astro";
             canisterId,
           });
           const registerResponse = await webapp.register_early_adopter();
+          busyScreen.classList.add('hide');
           if ("Ok" in registerResponse) {
             resolve({ status: 200, message: 'Logged in successfully!' });
           } else {
@@ -102,6 +115,8 @@ import Success from "../pages/success.astro";
           }
         },
         onError: (err) => {
+          // TODO: Gracefully manage the error
+          busyScreen.classList.add('hide');
           resolve({ status: 400, message: err });
         },
         identityProvider,
@@ -194,6 +209,7 @@ import Success from "../pages/success.astro";
     --vc-mika: #8c45f0;
     --vc-rosewater: #ede8fa;
     --vc-chrome: #e5e5e5;
+    --fade: #000000d9;
     
     --vg-lovepotion: linear-gradient(90deg, var(--vc-grape), var(--vc-mika));
     --vg-lovepotion--repeating: linear-gradient(90deg, var(--vc-grape), var(--vc-mika), var(--vc-grape));
@@ -233,6 +249,9 @@ import Success from "../pages/success.astro";
     --rc-link: var(--vc-mika);
     --rc-line: var(--vc-chrome);
     --rc-line-dark: var(--vc-raven);
+
+    --rc-backdrop: var(--fade);
+    --rc-backdrop-contrast: var(--vc-snow);
     
     
     /**	vs: value size (to use in other vairables) */
@@ -277,6 +296,8 @@ import Success from "../pages/success.astro";
 
     --rs-border-radius: var(--vs-wolf);
     --rs-border-radius--small: var(--vs-fox);
+
+    --rs-spinner-size: var(--vs-wolf);
     
     /** helper vars */
     --percent-10px: 62.5%;
@@ -790,5 +811,69 @@ import Success from "../pages/success.astro";
       align-self: flex-end;
       transform: translateX(20%);
     }
+  }
+
+  @use "../styles/mixins/display";
+
+  .busy {
+    display: flex;
+
+    z-index: 1000;
+
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+
+    background: var(--rc-backdrop);
+    color: var(--rc-backdrop-contrast);
+  }
+
+  .busy.hide {
+    display: none;
+  }
+
+  .content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    flex-grow: 1;
+  }
+
+  /* Reference spinner: https://console.juno.build/ */
+  .spinner-wrapper {
+    position: relative;
+    height: 30px;
+    margin: 1.45rem;
+  }
+
+  @keyframes spinner-rotate {
+    0% {
+      transform: perspective(120px) rotateX(0) rotateY(0);
+    }
+    50% {
+      transform: perspective(120px) rotateX(-180.1deg) rotateY(0);
+    }
+    100% {
+      transform: perspective(120px) rotateX(-180deg) rotateY(-179.9deg);
+    }
+  }
+
+  .spinner {
+    border-color: var(--rc-backdrop-contrast);
+    position: absolute;
+    top: calc(50% - var(--rs-spinner-size) / 2);
+    left: calc(50% - var(--rs-spinner-size) / 2);
+
+    display: block;
+    background: transparent;
+    border: 3px solid var(--rc-backdrop-contrast);
+    width: var(--rs-spinner-size);
+    height: var(--rs-spinner-size);
+    border-radius: 3px;
+    animation: spinner-rotate 1.2s infinite linear;
   }
 </style>
