@@ -89,11 +89,11 @@ import Success from "../pages/success.astro";
   const host = import.meta.env.PUBLIC_HOST;
   const mainAppElement = document.querySelector("[data-app]") as HTMLElement;
   const canisterId = mainAppElement.dataset.canisterId ?? import.meta.env.PUBLIC_OWN_CANISTER_ID;
+  const fetchRootKey = import.meta.env.PUBLIC_FETCH_ROOT_KEY === "true";
 
   const busyScreen = document.getElementById('busy') as HTMLDivElement;
 
   const login = () => {
-
     return new Promise((resolve) => {
       busyScreen.classList.remove('hide');
 
@@ -101,7 +101,7 @@ import Success from "../pages/success.astro";
         onSuccess: async () => {
           const identity = authClient.getIdentity();
           const agent = new HttpAgent({ identity, host });
-          if (import.meta.env.DEV) {
+          if (fetchRootKey) {
             await agent.fetchRootKey();
           }
           const webapp: _SERVICE = Actor.createActor(webapp_idl, {
