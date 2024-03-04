@@ -21,6 +21,7 @@ import Success from "../pages/success.astro";
     <title>{title}</title>
   </head>
   <body>
+    <!-- data-app is also used to add the canister id as data-canister-id -->
     <div data-app>
       <slot />
     </div>
@@ -84,9 +85,10 @@ import Success from "../pages/success.astro";
   };
 
   const authClient = await AuthClient.create();
-  const identityProvider = import.meta.env.PROD ? "https://identity.ic0.app/" : import.meta.env.PUBLIC_INTERNET_IDENTITY_URL;
-  const host = import.meta.env.DEV ? import.meta.env.PUBLIC_HOST : undefined;
-  const canisterId = import.meta.env.PUBLIC_OWN_CANISTER_ID;
+  const identityProvider = import.meta.env.PUBLIC_INTERNET_IDENTITY_URL;
+  const host = import.meta.env.PUBLIC_HOST;
+  const mainAppElement = document.querySelector("[data-app]") as HTMLElement;
+  const canisterId = mainAppElement.dataset.canisterId ?? import.meta.env.PUBLIC_OWN_CANISTER_ID;
 
   const busyScreen = document.getElementById('busy') as HTMLDivElement;
 

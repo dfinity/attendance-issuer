@@ -521,11 +521,11 @@ pub struct HttpResponse {
 fn fixup_html(html: &str) -> String {
     let canister_id = api::id();
 
-    // the string we are replacing here is inserted by vite during the front-end build
+    // the string we are replacing here is part of the astro main Layout
     html.replace(
-            r#"<script type="module" crossorigin src="/index.js"></script>"#,
-            &format!(r#"<script data-canister-id="{canister_id}" type="module" crossorigin src="/index.js"></script>"#).to_string()
-        )
+        r#"<div data-app>"#,
+        &format!(r#"<div data-app data-canister-id="{canister_id}">"#).to_string(),
+    )
 }
 
 #[cfg(test)]
