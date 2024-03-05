@@ -9,9 +9,10 @@ Before building the wasm you need to specify the environment variables of the co
 
 The needed env vars are:
 
-* `PUBLIC_INTERNET_IDENTITY_URL`.
-* `PUBLIC_HOST`.
-* `PUBLIC_OWN_CANISTER_ID`. Used only for local development.
+* `PUBLIC_INTERNET_IDENTITY_URL`. Ex: `http://bnz7o-iuaaa-aaaaa-qaaaa-cai.localhost:8080`.
+* `PUBLIC_HOST`. Ex: `http://localhost:8080`.
+* `PUBLIC_OWN_CANISTER_ID`. Used only for local development. Ex: `bw4dl-smaaa-aaaaa-qaacq-cai`
+* `PUBLIC_FETCH_ROOT_KEY`. Whether client should fetch root key before making calls. Used for development environments. Ex: `true`.
 
 To set the vars you need to put then in the `.env` file.
 
