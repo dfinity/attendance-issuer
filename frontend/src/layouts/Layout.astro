@@ -8,6 +8,7 @@ const { title } = Astro.props;
 // import pages for dynamic content
 import Retruning from "../pages/retruning.astro";
 import Success from "../pages/success.astro";
+import ToastError from "../components/ToastError.astro";
 ---
 
 <!doctype html>
@@ -31,6 +32,9 @@ import Success from "../pages/success.astro";
           <div class="spinner"></div>
         </div>
       </div>
+    </div>
+    <div class="c-toasts l-container">
+      <ToastError />
     </div>
     <template id="returning">
       <Retruning extendsLayout={false} />
@@ -99,25 +103,33 @@ import Success from "../pages/success.astro";
 
       authClient.login({
         onSuccess: async () => {
-          const identity = authClient.getIdentity();
-          const agent = new HttpAgent({ identity, host });
-          if (fetchRootKey) {
-            await agent.fetchRootKey();
-          }
-          const webapp: _SERVICE = Actor.createActor(webapp_idl, {
-            agent,
-            canisterId,
-          });
-          const registerResponse = await webapp.register_early_adopter();
-          busyScreen.classList.add('hide');
-          if ("Ok" in registerResponse) {
-            resolve({ status: 200, message: 'Logged in successfully!' });
-          } else {
-            resolve({ status: 400, message: registerResponse.Err.Internal });
+          try {
+            const identity = authClient.getIdentity();
+            const agent = new HttpAgent({ identity, host });
+            if (fetchRootKey) {
+              await agent.fetchRootKey();
+            }
+            const webapp: _SERVICE = Actor.createActor(webapp_idl, {
+              agent,
+              canisterId,
+            });
+            const registerResponse = await webapp.register_early_adopter();
+            if ("Ok" in registerResponse) {
+              resolve({ status: 200, message: 'Logged in successfully!' });
+            } else {
+              resolve({ status: 400, message: registerResponse.Err.Internal });
+            }
+          } catch (err: unknown) {
+            resolve({ status: 400, message: `There was an error while trying to register. ${err}` });
+          } finally {
+            busyScreen.classList.add('hide');
           }
         },
         onError: (err) => {
-          // TODO: Gracefully manage the error
+          // Show nothing if the user cancelled the flow.
+          if (err !== "UserInterrupt" || true) {
+            showErrorToast("The sign-in process was aborted or did not succeed.");
+          }
           busyScreen.classList.add('hide');
           resolve({ status: 400, message: err });
         },
@@ -156,16 +168,17 @@ import Success from "../pages/success.astro";
       if (status.status === 200) {
         $app.innerHTML = $templateSuccess.innerHTML;
       }
-      // TODO: Add error management
+
+      if (status.status === 400) {
+        showErrorToast(status.message);
+      }
       // TODO: Remove if we remove the registration.astro file
     } else if ($target.matches('[data-register]')) {
       const status = await dummyRegister() as { status: number; message: string }
 
       if (status.status === 200) {
-        console.log('do the registration thingy!');
         $app.innerHTML = $templateSuccess.innerHTML;
       } else {
-        console.log('do the retrun thingy!');
         $app.innerHTML = $templateReturning.innerHTML;
       }
     }
@@ -175,6 +188,18 @@ import Success from "../pages/success.astro";
     capture: true,
     passive: true,
   });
+
+
+  const toastElement = document.getElementById("toast-error") as HTMLElement;
+  const toastMessageElement = document.getElementById("toast-error-message") as HTMLElement;
+  const hideErrorToast = () => {
+    toastElement.classList.add("hide");
+  };
+  const showErrorToast = (message: string) => {
+    toastMessageElement.innerHTML = message;
+    toastElement.classList.remove("hide");
+    setTimeout(hideErrorToast, 5000);
+  };
 </script>
 
 <style is:global>
@@ -211,6 +236,8 @@ import Success from "../pages/success.astro";
     --vc-mika: #8c45f0;
     --vc-rosewater: #ede8fa;
     --vc-chrome: #e5e5e5;
+    --vc-light-grey: #d4d8e5;
+    --vc-brand-pink--light: rgba(251, 172, 202, 1);
     --fade: #000000d9;
     
     --vg-lovepotion: linear-gradient(90deg, var(--vc-grape), var(--vc-mika));
@@ -254,6 +281,9 @@ import Success from "../pages/success.astro";
 
     --rc-backdrop: var(--fade);
     --rc-backdrop-contrast: var(--vc-snow);
+
+    --rc-toast-border: var(--vc-light-grey);
+    --rc-toast-background--error: var(--vc-brand-pink--light);
     
     
     /**	vs: value size (to use in other vairables) */
@@ -877,5 +907,33 @@ import Success from "../pages/success.astro";
     height: var(--rs-spinner-size);
     border-radius: 3px;
     animation: spinner-rotate 1.2s infinite linear;
+  }
+
+  /* Reference: Internet Identity Toasts */
+  .c-toasts {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: var(--z-toasts);
+    margin: 0 auto calc(var(--rs-footer-height) + 0.5rem);
+  }
+
+  .l-container {
+    font-size: 1.6rem;
+    min-width: 40rem;
+    max-width: 40rem;
+    /* centers the container and adds a bit of space to make sure the footer does not stick to it */
+    margin: 0 auto 2rem;
+  }
+
+  @media (max-width: 512px) {
+    .l-container {
+      width: 100%;
+
+      max-width: none;
+      /* centers the container and adds a bit of space to make sure the footer does not stick to it */
+      margin: 0 0 var(--rs-footer-height);
+    }
   }
 </style>
