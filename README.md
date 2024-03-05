@@ -16,6 +16,8 @@ The needed env vars are:
 
 To set the vars you need to put then in the `.env` file.
 
+**NOTE: Careful with the bash env vars which override the ones in `.env` file.**
+
 ### Build
 
 Run `build.sh`-script to build the issuer canister.
@@ -33,9 +35,13 @@ whose location should be set via environment variables `STATE_MACHINE_BINARY` re
 
 The end-to-end test use [Playwright](https://playwright.dev/).
 
+If this is the first time running it, you need to install the browsers: `npx playwright install` from the `frontend` directory.
+
 Prepare the environment before running them:
 
-* Start local replica: `dfx start`.
-* Deploy canisters: `dfx deploy`.
+* Start local replica: `dfx start`. From the root directory.
+* Deploy canisters: `dfx deploy`. From the root directory.
 * Populate `frontend/.env` manually. Script pending.
-* Run frontend server: `npm run dev`.
+* Run frontend server: `npm run dev`. From the `/frontend` directory.
+
+**NOTE: Careful with the bash env vars which override the ones in `.env` file.**

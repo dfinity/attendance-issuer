@@ -27,6 +27,8 @@ export default defineConfig({
     baseURL: 'http://localhost:4321',
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
+    /* Uncomment if you want to see the e2e tests running in the browser */
+    // headless: false,
     testIdAttribute: 'data-tid',
   },
 
