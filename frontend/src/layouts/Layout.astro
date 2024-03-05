@@ -5,9 +5,7 @@ interface Props {
 
 const { title } = Astro.props;
 
-// import pages for dynamic content
-import Retruning from "../pages/retruning.astro";
-import Success from "../pages/success.astro";
+import Success from "../components/Success.astro";
 import ToastError from "../components/ToastError.astro";
 ---
 
@@ -36,11 +34,8 @@ import ToastError from "../components/ToastError.astro";
     <div class="c-toasts l-container">
       <ToastError />
     </div>
-    <template id="returning">
-      <Retruning extendsLayout={false} />
-    </template>
     <template id="success">
-      <Success extendsLayout={false} />
+      <Success />
     </template>
   </body>
 </html>
@@ -139,20 +134,7 @@ import ToastError from "../components/ToastError.astro";
     });
   };
 
-  // TODO: Remove if we remove the registration.astro file.
-  const dummyRegister = async () => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({ // resolve the promise whith whatever makes sense for your use case
-          status: 200,
-          message: 'Registered successfully!',
-        });
-      }, 1000);
-    });
-  };
-
   // select the templates for the different pages / states
-  const $templateReturning = document.getElementById('returning') as HTMLTemplateElement;
   const $templateSuccess = document.getElementById('success') as HTMLTemplateElement;
 
   // wrap containing the app
@@ -171,15 +153,6 @@ import ToastError from "../components/ToastError.astro";
 
       if (status.status === 400) {
         showErrorToast(status.message);
-      }
-      // TODO: Remove if we remove the registration.astro file
-    } else if ($target.matches('[data-register]')) {
-      const status = await dummyRegister() as { status: number; message: string }
-
-      if (status.status === 200) {
-        $app.innerHTML = $templateSuccess.innerHTML;
-      } else {
-        $app.innerHTML = $templateReturning.innerHTML;
       }
     }
   }
