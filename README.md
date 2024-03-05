@@ -28,3 +28,14 @@ Run `build.sh`-script to build the issuer canister.
 
 To run tests via `cargo test` two binaries are needed, namely `ic-test-state-machine` and `internet_identity.wasm.gz`, 
 whose location should be set via environment variables `STATE_MACHINE_BINARY` resp. `II_WASM`.
+
+## End-to-end testing
+
+The end-to-end test use [Playwright](https://playwright.dev/).
+
+Prepare the environment before running them:
+
+* Start local replica: `dfx start`.
+* Deploy canisters: `dfx deploy`.
+* Populate `frontend/.env` manually. Script pending.
+* Run frontend server: `npm run dev`.
