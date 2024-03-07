@@ -1,13 +1,11 @@
-import { expect, type BrowserContext, type Page, type TestInfo } from "@playwright/test";
+import { expect, type BrowserContext, type Page } from "@playwright/test";
 
 export const signInWithNewUser = async ({
   page,
   context,
-  testInfo,
 }: {
   page: Page;
   context: BrowserContext;
-  testInfo: TestInfo;
 }) => {
   const iiPagePromise = context.waitForEvent("page");
 
