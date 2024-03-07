@@ -33,6 +33,9 @@ jobs:
     - name: Create config
       working-directory: frontend
       run: DFX_NETWORK=local ./scripts/create-env-vars.sh
+    - name: Print env vars
+      working-directory: frontend
+      run: cat .env
     - name: Deploy canisters
       run: dfx deploy --no-wallet --network local
     - name: Run Playwright tests
