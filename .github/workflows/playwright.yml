@@ -41,6 +41,8 @@ jobs:
     - uses: actions/upload-artifact@v4
       if: failure()
       with:
-        name: playwright-report
-        path: frontend/playwright-report/
+        name: playwright-failure-results
+        path: |
+          frontend/playwright-report/*
+          frontend/playwright-results/*
         retention-days: 3

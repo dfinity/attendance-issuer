@@ -1,11 +1,13 @@
-import { expect, type BrowserContext, type Page } from "@playwright/test";
+import { expect, type BrowserContext, type Page, type TestInfo } from "@playwright/test";
 
 export const signInWithNewUser = async ({
   page,
   context,
+  testInfo,
 }: {
   page: Page;
   context: BrowserContext;
+  testInfo: TestInfo;
 }) => {
   const iiPagePromise = context.waitForEvent("page");
 
@@ -17,6 +19,8 @@ export const signInWithNewUser = async ({
   await iiPage.locator("#registerButton").click();
   await iiPage.locator("[data-action=construct-identity]").click();
 
+  const screenshot = await page.screenshot();
+  await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
   await iiPage.locator("input#captchaInput").waitFor();
   await iiPage.locator("input#captchaInput").fill("a");
   await iiPage.locator("#confirmRegisterButton").click();
