@@ -29,6 +29,7 @@ jobs:
         dfx canister create internet_identity
         dfx canister create early_adopter
     - name: Create config
+      working-directory: frontend
       run: DFX_NETWORK=local ./scripts/create-config.sh
     - name: Deploy canisters
       run: dfx deploy --no-wallet --network local
