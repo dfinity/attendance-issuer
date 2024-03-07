@@ -12,11 +12,15 @@ if [ "$DFX_NETWORK" = "local" ]; then
   REPLICA_SERVER_PORT=$(dfx info webserver-port)
   II_URL="http://${II_CANISTER_ID}.localhost:8080"
   HOST="http://localhost:${REPLICA_SERVER_PORT}"
-  echo -e "PUBLIC_INTERNET_IDENTITY_URL=${II_URL}\nPUBLIC_HOST=${HOST}\nPUBLIC_FETCH_ROOT_KEY=true\n" > $ENV_FILE
+  echo "PUBLIC_INTERNET_IDENTITY_URL=${II_URL}" > $ENV_FILE
+  echo "PUBLIC_HOST=${HOST}" >> $ENV_FILE
+  echo "PUBLIC_FETCH_ROOT_KEY=true\n" >> $ENV_FILE
 fi
 if [ "$DFX_NETWORK" = "mainnet" ]; then
   II_URL="https://${II_CANISTER_ID}.ic0.app"
   HOST="https://icp-api.io"
-  echo -e "PUBLIC_INTERNET_IDENTITY_URL=${II_URL}\nPUBLIC_HOST=${HOST}\nPUBLIC_FETCH_ROOT_KEY=false\n" > $ENV_FILE
+  echo "PUBLIC_INTERNET_IDENTITY_URL=${II_URL}" > $ENV_FILE
+  echo "PUBLIC_HOST=${HOST}" >> $ENV_FILE
+  echo "PUBLIC_FETCH_ROOT_KEY=false\n" >> $ENV_FILE
 fi
 
