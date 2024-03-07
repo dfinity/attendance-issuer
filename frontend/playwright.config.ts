@@ -25,8 +25,9 @@ export default defineConfig({
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:4321',
+    screenshot: "only-on-failure",
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
+    trace: "retain-on-failure",
     /* Uncomment if you want to see the e2e tests running in the browser */
     // headless: false,
     testIdAttribute: 'data-tid',
