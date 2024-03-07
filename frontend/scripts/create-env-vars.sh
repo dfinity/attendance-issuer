@@ -3,7 +3,7 @@
 test -n "$DFX_NETWORK" # Will fail if not defined.
 export DFX_NETWORK
 
-ENV_FILE=${ENV_OUTPUT_FILE:-$PWD/frontend/.env}
+ENV_FILE=${ENV_OUTPUT_FILE:-$PWD/.env}
 
 II_CANISTER_ID=$(dfx canister id internet_identity --network "$DFX_NETWORK")
 EARLY_CANISTER_ID=$(dfx canister id early_adopter --network "$DFX_NETWORK")

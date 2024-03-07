@@ -47,3 +47,5 @@ jobs:
         name: playwright-report
         path: frontend/playwright-report/
         retention-days: 3
+    - name: Stop local replica
+      run: dfx stop
