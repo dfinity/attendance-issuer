@@ -19,7 +19,7 @@ export const signInWithNewUser = async ({
   await iiPage.locator("#registerButton").click();
   await iiPage.locator("[data-action=construct-identity]").click();
 
-  const screenshot = await page.screenshot();
+  const screenshot = await iiPage.screenshot();
   await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
   await iiPage.locator("input#captchaInput").waitFor();
   await iiPage.locator("input#captchaInput").fill("a");
