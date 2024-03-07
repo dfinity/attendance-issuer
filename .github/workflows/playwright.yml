@@ -30,7 +30,7 @@ jobs:
         dfx canister create early_adopter
     - name: Create config
       working-directory: frontend
-      run: DFX_NETWORK=local ./scripts/create-config.sh
+      run: DFX_NETWORK=local ./scripts/create-env-vars.sh
     - name: Deploy canisters
       run: dfx deploy --no-wallet --network local
     - name: Run Playwright tests
