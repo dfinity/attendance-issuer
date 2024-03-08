@@ -15,9 +15,7 @@ jobs:
         node-version: 20
     - name: Install dependencies
       working-directory: frontend
-      run: |
-        pwd
-        npm ci
+      run: npm ci
     - name: Install ic-wasm
       run: cargo install ic-wasm --version 0.3.5
     - name: Install Playwright Browsers
@@ -27,15 +25,13 @@ jobs:
     - name: Start local replica
       run: dfx start --background
     - name: Create canistres
+      # We create the canisters first to have the ids when we build the frontend env vars
       run: |
         dfx canister create internet_identity
         dfx canister create early_adopter
     - name: Create config
       working-directory: frontend
       run: DFX_NETWORK=local ./scripts/create-env-vars.sh
-    - name: Print env vars
-      working-directory: frontend
-      run: cat .env
     - name: Deploy canisters
       run: dfx deploy --no-wallet --network local
     - name: Run Playwright tests
