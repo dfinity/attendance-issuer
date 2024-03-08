@@ -1,4 +1,15 @@
-# This script creates the `.env` file and populates it with the environment variables depending on the environment.
+#!/usr/bin/env bash
+
+print_help() {
+  cat <<-EOF
+
+	This script creates the `.env` file and populates it with the environment variables depending on the environment.
+
+	The scripts requires DFX_NETWORK to be set and ENV_FILE is optional.
+
+  Example: DFX_NETWORK=local ./scripts/create-env-vars.sh
+	EOF
+}
 
 test -n "$DFX_NETWORK" # Will fail if not defined.
 export DFX_NETWORK

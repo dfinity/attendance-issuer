@@ -17,7 +17,6 @@ export const signInWithNewUser = async ({
   await iiPage.locator("#registerButton").click();
   await iiPage.locator("[data-action=construct-identity]").click();
 
-  await iiPage.locator("input#captchaInput").waitFor();
   await iiPage.locator("input#captchaInput").fill("a");
   await iiPage.locator("#confirmRegisterButton").click();
 
