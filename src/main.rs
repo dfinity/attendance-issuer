@@ -24,7 +24,6 @@ use vc_util::{
 };
 
 use asset_util::{collect_assets, CertifiedAssets};
-use ic_cdk::api::stable::WASM_PAGE_SIZE_IN_BYTES;
 use ic_cdk_macros::post_upgrade;
 
 /// We use restricted memory in order to ensure the separation between non-managed config memory (first page)
@@ -32,11 +31,6 @@ use ic_cdk_macros::post_upgrade;
 type Memory = RestrictedMemory<DefaultMemoryImpl>;
 type ConfigCell = StableCell<IssuerConfig, Memory>;
 type EarlyAdoptersMap = StableBTreeMap<Principal, EarlyAdopterData, VirtualMemory<Memory>>;
-
-const GB: u64 = 1 << 30;
-const BUCKET_SIZE_IN_PAGES: u16 = 128;
-const MAX_MANAGED_MEMORY_SIZE: u64 = 256 * GB;
-const MAX_MANAGED_WASM_PAGES: u64 = MAX_MANAGED_MEMORY_SIZE / WASM_PAGE_SIZE_IN_BYTES as u64;
 
 const EARLY_ADOPTERS_MEMORY_ID: MemoryId = MemoryId::new(0u8);
 
@@ -83,7 +77,7 @@ thread_local! {
     static CONFIG: RefCell<ConfigCell> = RefCell::new(ConfigCell::init(config_memory(), IssuerConfig::default()).expect("failed to initialize stable cell"));
 
     static MEMORY_MANAGER: RefCell<MemoryManager<Memory>> =
-        RefCell::new(MemoryManager::init_with_bucket_size(managed_memory(), BUCKET_SIZE_IN_PAGES));
+        RefCell::new(MemoryManager::init(managed_memory()));
 
     static EARLY_ADOPTERS : RefCell<EarlyAdoptersMap> = RefCell::new(
       StableBTreeMap::init(
@@ -113,7 +107,10 @@ fn config_memory() -> Memory {
 
 /// All the stable memory after the first page is managed by MemoryManager
 fn managed_memory() -> Memory {
-    RestrictedMemory::new(DefaultMemoryImpl::default(), 1..MAX_MANAGED_WASM_PAGES)
+    RestrictedMemory::new(
+        DefaultMemoryImpl::default(),
+        1..ic_stable_structures::MAX_PAGES,
+    )
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -391,9 +388,14 @@ fn register_early_adopter() -> Result<EarlyAdopterStatus, EarlyAdopterError> {
     let user_id = caller();
     let joined_timestamp_s = (time() / 1_000_000_000) as u32;
     let new_data = EarlyAdopterData { joined_timestamp_s };
-    let current_data = EARLY_ADOPTERS
-        .with_borrow_mut(|adopters| adopters.insert(user_id, new_data.clone()))
-        .unwrap_or(new_data);
+    let current_data = EARLY_ADOPTERS.with_borrow_mut(|adopters| {
+        if let Some(data) = adopters.get(&user_id) {
+            data
+        } else {
+            adopters.insert(user_id, new_data.clone());
+            new_data
+        }
+    });
     println!(
         "Registered {} at timestamp {}.",
         user_id.to_text(),

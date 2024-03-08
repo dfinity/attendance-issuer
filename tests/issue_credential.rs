@@ -6,7 +6,9 @@ use canister_sig_util::{extract_raw_root_pk_from_der, CanisterSigPublicKey};
 use canister_tests::api::http_request;
 use canister_tests::api::internet_identity::vc_mvp as ii_api;
 use canister_tests::flows;
-use canister_tests::framework::{env, get_wasm_path, principal_1, test_principal, time};
+use canister_tests::framework::{
+    env, get_wasm_path, principal_1, principal_2, test_principal, time,
+};
 use ic_cdk::api::management_canister::provisional::CanisterId;
 use ic_response_verification::types::VerificationInfo;
 use ic_response_verification::verify_request_response_pair;
@@ -603,7 +605,52 @@ fn issuer_canister_serves_http_assets() -> Result<(), CallError> {
     Ok(())
 }
 
-/// Basic upgrade test.
+#[test]
+fn should_not_overwrite_the_first_registration() -> Result<(), CallError> {
+    let env = env();
+    let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
+    let user_a = principal_1();
+    let user_b = principal_2();
+
+    // Register two users at differen time, they should have different timestamps
+    let status_1_user_a =
+        api::register_early_adopter(&env, issuer_id, user_a)?.expect("Failed registering user a");
+    env.advance_time(std::time::Duration::from_secs(2));
+    let status_1_user_b =
+        api::register_early_adopter(&env, issuer_id, user_b)?.expect("Failed registering user b");
+    assert_ne!(
+        status_1_user_a.joined_timestamp_s,
+        status_1_user_b.joined_timestamp_s
+    );
+
+    // Re-register user a, it's timestamp should not change
+    let status_2_user_a = api::register_early_adopter(&env, issuer_id, user_a)?
+        .expect("Failed getting status for user a");
+    assert_eq!(
+        status_1_user_a.joined_timestamp_s,
+        status_2_user_a.joined_timestamp_s
+    );
+
+    // Re-register user a again, it's timestamp should still not change
+    env.advance_time(std::time::Duration::from_secs(2));
+    let status_3_user_a = api::register_early_adopter(&env, issuer_id, user_a)?
+        .expect("Failed getting status for user a");
+    assert_eq!(
+        status_1_user_a.joined_timestamp_s,
+        status_3_user_a.joined_timestamp_s
+    );
+
+    // Re-register user b, it's timestamp should not change
+    let status_2_user_b = api::register_early_adopter(&env, issuer_id, user_b)?
+        .expect("Failed getting status for user b");
+    assert_eq!(
+        status_1_user_b.joined_timestamp_s,
+        status_2_user_b.joined_timestamp_s
+    );
+
+    Ok(())
+}
+
 #[test]
 fn should_upgrade_issuer() -> Result<(), CallError> {
     let env = env();
@@ -624,29 +671,33 @@ fn should_upgrade_issuer() -> Result<(), CallError> {
     Ok(())
 }
 
-/// Test to verify that adopters are kept across upgrades.
 #[test]
 fn should_retain_adopters_after_upgrade() -> Result<(), CallError> {
     let env = env();
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
-    let authorized_principal = Principal::from_text(DUMMY_ALIAS_ID_DAPP_PRINCIPAL).unwrap();
-    let status_before = api::register_early_adopter(&env, issuer_id, authorized_principal)?
-        .expect("Failed registering");
+    let status_before =
+        api::register_early_adopter(&env, issuer_id, principal_1())?.expect("Failed registering");
     let arg = candid::encode_one("()").expect("error encoding issuer init arg as candid");
     env.upgrade_canister(issuer_id, EARLY_ADOPTER_ISSUER_WASM.clone(), arg, None)?;
     env.advance_time(std::time::Duration::from_secs(2));
-    let status_for_new_user = api::register_early_adopter(&env, issuer_id, principal_1())?
+    let status_for_new_user = api::register_early_adopter(&env, issuer_id, principal_2())?
         .expect("Failed registering new user");
     assert_ne!(
         status_before.joined_timestamp_s,
         status_for_new_user.joined_timestamp_s
     );
-    let status_after = api::register_early_adopter(&env, issuer_id, authorized_principal)?
+    let status_after = api::register_early_adopter(&env, issuer_id, principal_1())?
         .expect("Failed getting status");
-
     assert_eq!(
         status_before.joined_timestamp_s,
         status_after.joined_timestamp_s
+    );
+
+    let status_after_repeated = api::register_early_adopter(&env, issuer_id, principal_1())?
+        .expect("Failed getting status");
+    assert_eq!(
+        status_before.joined_timestamp_s,
+        status_after_repeated.joined_timestamp_s
     );
     Ok(())
 }

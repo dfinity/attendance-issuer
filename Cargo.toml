@@ -16,7 +16,7 @@ candid = "0.10"
 ic-cdk = "0.12"
 ic-cdk-macros = "0.8"
 ic-certification = "2.2"
-ic-stable-structures = "0.6.3"
+ic-stable-structures = "0.6"
 
 # other dependencies
 hex = "0.4"
