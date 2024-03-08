@@ -42,22 +42,8 @@ import ToastError from "../components/ToastError.astro";
 
 <script>
   import { AuthClient } from "@dfinity/auth-client";
-  import { Actor, HttpAgent, type ActorMethod } from "@dfinity/agent";
-
-  type RegisterEarlyAdopterResponse =
-    | { Ok: { joined_timestamp_s: number } }
-    | { Err: { Internal: string }}
-  
-  // @ts-ignore - The interface of the whoami canister
-  const webapp_idl = ({ IDL }) => {
-    const EarlyAdopterStatus = IDL.Record({ 'joined_timestamp_s' : IDL.Nat32 });
-    const EarlyAdopterError = IDL.Variant({ 'Internal' : IDL.Text });
-    return IDL.Service({ register_early_adopter: IDL.Func([], [IDL.Variant({ 'Ok' : EarlyAdopterStatus, 'Err' : EarlyAdopterError })], []) });
-  };
-
-  export interface _SERVICE {
-    register_early_adopter: ActorMethod<[], RegisterEarlyAdopterResponse>;
-  }
+  import { HttpAgent } from "@dfinity/agent";
+  import { createActor } from "../utils/actor";
 
   const AUTH_POPUP_WIDTH = 576;
   const AUTH_POPUP_HEIGHT = 625;
@@ -89,25 +75,19 @@ import ToastError from "../components/ToastError.astro";
   const mainAppElement = document.querySelector("[data-app]") as HTMLElement;
   const canisterId = mainAppElement.dataset.canisterId ?? import.meta.env.PUBLIC_OWN_CANISTER_ID;
   const fetchRootKey = import.meta.env.PUBLIC_FETCH_ROOT_KEY === "true";
-
+  
   const busyScreen = document.getElementById('busy') as HTMLDivElement;
-
+  
   const login = () => {
     return new Promise((resolve) => {
       busyScreen.classList.remove('hide');
-
+      
       authClient.login({
         onSuccess: async () => {
           try {
             const identity = authClient.getIdentity();
             const agent = new HttpAgent({ identity, host });
-            if (fetchRootKey) {
-              await agent.fetchRootKey();
-            }
-            const webapp: _SERVICE = Actor.createActor(webapp_idl, {
-              agent,
-              canisterId,
-            });
+            const webapp = await createActor({ canisterId, agent, fetchRootKey})
             const registerResponse = await webapp.register_early_adopter();
             if ("Ok" in registerResponse) {
               resolve({ status: 200, message: 'Logged in successfully!' });
