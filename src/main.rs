@@ -4,15 +4,15 @@ use canister_sig_util::{extract_raw_root_pk_from_der, CanisterSigPublicKey, IC_R
 use ic_cdk::api::{caller, set_certified_data, time};
 use ic_cdk_macros::{init, query, update};
 use ic_certification::{fork_hash, labeled_hash, pruned, Hash};
-use ic_stable_structures::storable::Bound;
-use ic_stable_structures::{DefaultMemoryImpl, RestrictedMemory, StableCell, Storable};
+use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
+use ic_stable_structures::storable::{Bound, Storable};
+use ic_stable_structures::{DefaultMemoryImpl, RestrictedMemory, StableBTreeMap, StableCell};
 use include_dir::{include_dir, Dir};
 use lazy_static::lazy_static;
 use serde_bytes::ByteBuf;
 use sha2::{Digest, Sha256};
 use std::borrow::Cow;
 use std::cell::RefCell;
-use std::collections::HashMap;
 use vc_util::issuer_api::{
     ArgumentValue, CredentialSpec, GetCredentialRequest, Icrc21ConsentInfo, Icrc21Error,
     Icrc21ErrorInfo, Icrc21VcConsentMessageRequest, IssueCredentialError, IssuedCredentialData,
@@ -24,13 +24,15 @@ use vc_util::{
 };
 
 use asset_util::{collect_assets, CertifiedAssets};
-use ic_cdk::api;
 use ic_cdk_macros::post_upgrade;
 
 /// We use restricted memory in order to ensure the separation between non-managed config memory (first page)
 /// and the managed memory for potential other data of the canister.
 type Memory = RestrictedMemory<DefaultMemoryImpl>;
 type ConfigCell = StableCell<IssuerConfig, Memory>;
+type EarlyAdoptersMap = StableBTreeMap<Principal, EarlyAdopterData, VirtualMemory<Memory>>;
+
+const EARLY_ADOPTERS_MEMORY_ID: MemoryId = MemoryId::new(0u8);
 
 const ISSUER_URL: &str = "https://internetidentity.vc";
 const CREDENTIAL_URL_PREFIX: &str = "data:text/plain;charset=UTF-8,";
@@ -43,8 +45,19 @@ const VC_EXPIRATION_PERIOD_NS: u64 = 15 * MINUTE_NS;
 const EOY_2024_TIMESTAMP_S: u32 = 1735685999;
 
 // Internal container of per-user data.
+#[derive(CandidType, Clone, Deserialize)]
 struct EarlyAdopterData {
     pub joined_timestamp_s: u32,
+}
+
+impl Storable for EarlyAdopterData {
+    fn to_bytes(&self) -> Cow<[u8]> {
+        Cow::Owned(candid::encode_one(self).expect("failed to encode EarlyAdopterData"))
+    }
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        candid::decode_one(&bytes).expect("failed to decode EarlyAdopterData")
+    }
+    const BOUND: Bound = Bound::Unbounded;
 }
 
 // User-facing container of per-user data.
@@ -59,13 +72,26 @@ pub enum EarlyAdopterError {
 }
 
 thread_local! {
-    /// Static configuration of the canister set by init() or post_upgrade().
+    /// Stable structures
+    // Static configuration of the canister set by init() or post_upgrade().
     static CONFIG: RefCell<ConfigCell> = RefCell::new(ConfigCell::init(config_memory(), IssuerConfig::default()).expect("failed to initialize stable cell"));
-    static SIGNATURES : RefCell<SignatureMap> = RefCell::new(SignatureMap::default());
-    static EARLY_ADOPTERS : RefCell<HashMap<Principal, EarlyAdopterData>> = RefCell::new(HashMap::new());
 
+    static MEMORY_MANAGER: RefCell<MemoryManager<Memory>> =
+        RefCell::new(MemoryManager::init(managed_memory()));
+
+    static EARLY_ADOPTERS : RefCell<EarlyAdoptersMap> = RefCell::new(
+      StableBTreeMap::init(
+            MEMORY_MANAGER.with(|m| m.borrow().get(EARLY_ADOPTERS_MEMORY_ID)),
+    ));
+
+    /// Non-stable structures
+    // Canister signatures
+    static SIGNATURES : RefCell<SignatureMap> = RefCell::new(SignatureMap::default());
     // Assets for the management app
     static ASSETS: RefCell<CertifiedAssets> = RefCell::new(CertifiedAssets::default());
+
+
+
 }
 
 lazy_static! {
@@ -77,6 +103,14 @@ lazy_static! {
 /// Reserve the first stable memory page for the configuration stable cell.
 fn config_memory() -> Memory {
     RestrictedMemory::new(DefaultMemoryImpl::default(), 0..1)
+}
+
+/// All the stable memory after the first page is managed by MemoryManager
+fn managed_memory() -> Memory {
+    RestrictedMemory::new(
+        DefaultMemoryImpl::default(),
+        1..ic_stable_structures::MAX_PAGES,
+    )
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -353,15 +387,23 @@ fn verify_early_adopter_spec_and_get_since_year(spec: &CredentialSpec) -> Result
 fn register_early_adopter() -> Result<EarlyAdopterStatus, EarlyAdopterError> {
     let user_id = caller();
     let joined_timestamp_s = (time() / 1_000_000_000) as u32;
-    EARLY_ADOPTERS.with_borrow_mut(|adopters| {
-        adopters.insert(user_id, EarlyAdopterData { joined_timestamp_s })
+    let new_data = EarlyAdopterData { joined_timestamp_s };
+    let current_data = EARLY_ADOPTERS.with_borrow_mut(|adopters| {
+        if let Some(data) = adopters.get(&user_id) {
+            data
+        } else {
+            adopters.insert(user_id, new_data.clone());
+            new_data
+        }
     });
     println!(
         "Registered {} at timestamp {}.",
         user_id.to_text(),
-        joined_timestamp_s
+        current_data.joined_timestamp_s
     );
-    Ok(EarlyAdopterStatus { joined_timestamp_s })
+    Ok(EarlyAdopterStatus {
+        joined_timestamp_s: current_data.joined_timestamp_s,
+    })
 }
 
 #[query]
@@ -448,7 +490,7 @@ fn prepare_credential_jwt(
 
 fn verify_principal_registered_and_authorized(
     user: Principal,
-    adopters: &HashMap<Principal, EarlyAdopterData>,
+    adopters: &EarlyAdoptersMap,
     max_timestamp_s: u32,
 ) -> Result<(), IssueCredentialError> {
     let Some(ea_data) = adopters.get(&user) else {
@@ -519,7 +561,7 @@ pub struct HttpResponse {
 }
 
 fn fixup_html(html: &str) -> String {
-    let canister_id = api::id();
+    let canister_id = ic_cdk::api::id();
 
     // the string we are replacing here is part of the astro main Layout
     html.replace(

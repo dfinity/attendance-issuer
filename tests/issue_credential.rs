@@ -6,7 +6,9 @@ use canister_sig_util::{extract_raw_root_pk_from_der, CanisterSigPublicKey};
 use canister_tests::api::http_request;
 use canister_tests::api::internet_identity::vc_mvp as ii_api;
 use canister_tests::flows;
-use canister_tests::framework::{env, get_wasm_path, principal_1, test_principal, time, II_WASM};
+use canister_tests::framework::{
+    env, get_wasm_path, principal_1, principal_2, test_principal, time,
+};
 use ic_cdk::api::management_canister::provisional::CanisterId;
 use ic_response_verification::types::VerificationInfo;
 use ic_response_verification::verify_request_response_pair;
@@ -44,17 +46,31 @@ const DUMMY_ALIAS_ID_DAPP_PRINCIPAL: &str =
     "nugva-s7c6v-4yszt-koycv-5b623-an7q6-ha2nz-kz6rs-hawgl-nznbe-rqe";
 
 lazy_static! {
-    /** The gzipped Wasm module for the current VC_ISSUER build, i.e. the one we're testing */
-    pub static ref VC_ISSUER_WASM: Vec<u8> = {
+    /// Gzipped Wasm module for the current Early Adopter Issuer build, i.e. the one we're testing
+    pub static ref EARLY_ADOPTER_ISSUER_WASM: Vec<u8> = {
         let def_path = PathBuf::from("./").join("early_adopter_issuer.wasm.gz");
         let err = format!("
-        Could not find VC Issuer Wasm module for current build.
+        Could not find Early Adopter Issuer Wasm module for current build.
         I will look for it at {:?} (note that I run from {:?}).
+        You can build the Wasm by running ./build.sh
         ", &def_path,
             &std::env::current_dir().map(|x| x.display().to_string()).unwrap_or_else(|_|
                 "an unknown directory".to_string()));
-                get_wasm_path("VC_ISSUER_WASM".to_string(), &def_path).expect(&err)
+                get_wasm_path("EARLY_ADOPTER_ISSUER_WASM".to_string(), &def_path).expect(&err)
 
+    };
+
+    pub static ref II_WASM: Vec<u8> = {
+        let def_path = PathBuf::from("./").join("internet_identity.wasm.gz");
+        let err = format!("
+        Could not find Internet Identity Wasm module for current build.
+
+        I will look for it at {:?}, and you can specify another path with the environment variable II_WASM (note that I run from {:?}).
+
+        You can download the most recent II-wasm release from 
+        https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_test.wasm.gz
+        ", &def_path, &std::env::current_dir().map(|x| x.display().to_string()).unwrap_or_else(|_| "an unknown directory".to_string()));
+        get_wasm_path("II_WASM".to_string(), &def_path).expect(&err)
     };
 
     pub static ref DUMMY_ISSUER_INIT: IssuerInit = IssuerInit {
@@ -69,7 +85,7 @@ lazy_static! {
 
 pub fn install_canister(env: &StateMachine, wasm: Vec<u8>) -> CanisterId {
     let canister_id = env.create_canister(None);
-    let arg = candid::encode_one("()").expect("error encoding II installation arg as candid");
+    let arg = candid::encode_one("()").expect("error encoding issuer init arg as candid");
     env.install_canister(canister_id, wasm, arg, None);
     canister_id
 }
@@ -87,7 +103,7 @@ pub struct EarlyAdopterStatus {
     pub joined_timestamp_s: u32,
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Debug, Deserialize)]
 pub enum EarlyAdopterError {
     Internal(String),
 }
@@ -95,7 +111,7 @@ pub enum EarlyAdopterError {
 pub fn install_issuer(env: &StateMachine, init: &IssuerInit) -> CanisterId {
     let canister_id = env.create_canister(None);
     let arg = candid::encode_one(Some(init)).expect("error encoding II installation arg as candid");
-    env.install_canister(canister_id, VC_ISSUER_WASM.clone(), arg, None);
+    env.install_canister(canister_id, EARLY_ADOPTER_ISSUER_WASM.clone(), arg, None);
     canister_id
 }
 
@@ -168,9 +184,30 @@ mod api {
 }
 
 #[test]
+fn should_get_vc_consent_message() {
+    let env = env();
+    let canister_id = install_canister(&env, EARLY_ADOPTER_ISSUER_WASM.clone());
+
+    let consent_message_request = Icrc21VcConsentMessageRequest {
+        credential_spec: early_adopter_credential_spec(),
+        preferences: Icrc21ConsentPreferences {
+            language: "en-US".to_string(),
+        },
+    };
+
+    let consent_info =
+        api::vc_consent_message(&env, canister_id, principal_1(), &consent_message_request)
+            .expect("API call failed")
+            .expect("Failed to obtain consent info");
+    assert!(consent_info
+        .consent_message
+        .contains("Verifiable Credentials Early Adopter"));
+}
+
+#[test]
 fn should_fail_vc_consent_message_if_not_supported() {
     let env = env();
-    let canister_id = install_canister(&env, VC_ISSUER_WASM.clone());
+    let canister_id = install_canister(&env, EARLY_ADOPTER_ISSUER_WASM.clone());
 
     let consent_message_request = Icrc21VcConsentMessageRequest {
         credential_spec: CredentialSpec {
@@ -191,7 +228,7 @@ fn should_fail_vc_consent_message_if_not_supported() {
 #[test]
 fn should_fail_vc_consent_message_if_missing_arguments() {
     let env = env();
-    let canister_id = install_canister(&env, VC_ISSUER_WASM.clone());
+    let canister_id = install_canister(&env, EARLY_ADOPTER_ISSUER_WASM.clone());
 
     let consent_message_request = Icrc21VcConsentMessageRequest {
         credential_spec: CredentialSpec {
@@ -212,7 +249,7 @@ fn should_fail_vc_consent_message_if_missing_arguments() {
 #[test]
 fn should_fail_vc_consent_message_if_missing_required_argument() {
     let env = env();
-    let canister_id = install_canister(&env, VC_ISSUER_WASM.clone());
+    let canister_id = install_canister(&env, EARLY_ADOPTER_ISSUER_WASM.clone());
 
     let mut args = HashMap::new();
     args.insert("wrongArgument".to_string(), ArgumentValue::Int(42));
@@ -504,7 +541,7 @@ fn should_issue_credential_e2e() -> Result<(), CallError> {
 #[test]
 fn should_configure() {
     let env = env();
-    let issuer_id = install_canister(&env, VC_ISSUER_WASM.clone());
+    let issuer_id = install_canister(&env, EARLY_ADOPTER_ISSUER_WASM.clone());
     api::configure(&env, issuer_id, &DUMMY_ISSUER_INIT).expect("API call failed");
 }
 
@@ -540,7 +577,7 @@ fn issuer_canister_serves_http_assets() -> Result<(), CallError> {
     }
 
     let env = env();
-    let canister_id = install_canister(&env, VC_ISSUER_WASM.clone());
+    let canister_id = install_canister(&env, EARLY_ADOPTER_ISSUER_WASM.clone());
 
     // for each asset and certification version, fetch the asset, check the HTTP status code, headers and certificate.
 
@@ -565,5 +602,102 @@ fn issuer_canister_serves_http_assets() -> Result<(), CallError> {
         assert_eq!(result.verification_version, certification_version);
     }
 
+    Ok(())
+}
+
+#[test]
+fn should_not_overwrite_the_first_registration() -> Result<(), CallError> {
+    let env = env();
+    let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
+    let user_a = principal_1();
+    let user_b = principal_2();
+
+    // Register two users at differen time, they should have different timestamps
+    let status_1_user_a =
+        api::register_early_adopter(&env, issuer_id, user_a)?.expect("Failed registering user a");
+    env.advance_time(std::time::Duration::from_secs(2));
+    let status_1_user_b =
+        api::register_early_adopter(&env, issuer_id, user_b)?.expect("Failed registering user b");
+    assert_ne!(
+        status_1_user_a.joined_timestamp_s,
+        status_1_user_b.joined_timestamp_s
+    );
+
+    // Re-register user a, it's timestamp should not change
+    let status_2_user_a = api::register_early_adopter(&env, issuer_id, user_a)?
+        .expect("Failed getting status for user a");
+    assert_eq!(
+        status_1_user_a.joined_timestamp_s,
+        status_2_user_a.joined_timestamp_s
+    );
+
+    // Re-register user a again, it's timestamp should still not change
+    env.advance_time(std::time::Duration::from_secs(2));
+    let status_3_user_a = api::register_early_adopter(&env, issuer_id, user_a)?
+        .expect("Failed getting status for user a");
+    assert_eq!(
+        status_1_user_a.joined_timestamp_s,
+        status_3_user_a.joined_timestamp_s
+    );
+
+    // Re-register user b, it's timestamp should not change
+    let status_2_user_b = api::register_early_adopter(&env, issuer_id, user_b)?
+        .expect("Failed getting status for user b");
+    assert_eq!(
+        status_1_user_b.joined_timestamp_s,
+        status_2_user_b.joined_timestamp_s
+    );
+
+    Ok(())
+}
+
+#[test]
+fn should_upgrade_issuer() -> Result<(), CallError> {
+    let env = env();
+    let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
+    let arg = candid::encode_one("()").expect("error encoding issuer init arg as candid");
+    env.upgrade_canister(issuer_id, EARLY_ADOPTER_ISSUER_WASM.clone(), arg, None)?;
+
+    // Verify the canister is still running.
+    let consent_message_request = Icrc21VcConsentMessageRequest {
+        credential_spec: early_adopter_credential_spec(),
+        preferences: Icrc21ConsentPreferences {
+            language: "en-US".to_string(),
+        },
+    };
+    let _ = api::vc_consent_message(&env, issuer_id, principal_1(), &consent_message_request)
+        .expect("API call failed")
+        .expect("Failed to obtain consent info");
+    Ok(())
+}
+
+#[test]
+fn should_retain_adopters_after_upgrade() -> Result<(), CallError> {
+    let env = env();
+    let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
+    let status_before =
+        api::register_early_adopter(&env, issuer_id, principal_1())?.expect("Failed registering");
+    let arg = candid::encode_one("()").expect("error encoding issuer init arg as candid");
+    env.upgrade_canister(issuer_id, EARLY_ADOPTER_ISSUER_WASM.clone(), arg, None)?;
+    env.advance_time(std::time::Duration::from_secs(2));
+    let status_for_new_user = api::register_early_adopter(&env, issuer_id, principal_2())?
+        .expect("Failed registering new user");
+    assert_ne!(
+        status_before.joined_timestamp_s,
+        status_for_new_user.joined_timestamp_s
+    );
+    let status_after = api::register_early_adopter(&env, issuer_id, principal_1())?
+        .expect("Failed getting status");
+    assert_eq!(
+        status_before.joined_timestamp_s,
+        status_after.joined_timestamp_s
+    );
+
+    let status_after_repeated = api::register_early_adopter(&env, issuer_id, principal_1())?
+        .expect("Failed getting status");
+    assert_eq!(
+        status_before.joined_timestamp_s,
+        status_after_repeated.joined_timestamp_s
+    );
     Ok(())
 }
