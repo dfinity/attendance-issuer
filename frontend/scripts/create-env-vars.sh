@@ -10,7 +10,7 @@ EARLY_CANISTER_ID=$(dfx canister id early_adopter --network "$DFX_NETWORK")
 
 if [ "$DFX_NETWORK" = "local" ]; then
   REPLICA_SERVER_PORT=$(dfx info webserver-port)
-  II_URL="http://${II_CANISTER_ID}.localhost:8080"
+  II_URL="http://${II_CANISTER_ID}.localhost:${REPLICA_SERVER_PORT}"
   HOST="http://localhost:${REPLICA_SERVER_PORT}"
   echo "PUBLIC_INTERNET_IDENTITY_URL=${II_URL}" > $ENV_FILE
   echo "PUBLIC_HOST=${HOST}" >> $ENV_FILE
