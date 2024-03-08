@@ -5,6 +5,7 @@
       "type": "custom",
       "candid": "early_adopter_issuer.did",
       "wasm": "early_adopter_issuer.wasm.gz",
+      "output": "frontend/declarations",
       "build": "./build.sh",
       "shrink": false
     },
