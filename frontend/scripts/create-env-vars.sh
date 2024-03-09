@@ -24,6 +24,7 @@ if [ "$DFX_NETWORK" = "local" ]; then
   II_URL="http://${II_CANISTER_ID}.localhost:${REPLICA_SERVER_PORT}"
   HOST="http://localhost:${REPLICA_SERVER_PORT}"
   echo "PUBLIC_INTERNET_IDENTITY_URL=${II_URL}" > $ENV_FILE
+  echo "PUBLIC_OWN_CANISTER_ID=${EARLY_CANISTER_ID}" >> $ENV_FILE
   echo "PUBLIC_HOST=${HOST}" >> $ENV_FILE
   echo "PUBLIC_FETCH_ROOT_KEY=true" >> $ENV_FILE
 fi

@@ -3,9 +3,13 @@ An implementation of a VC issuer for "VerifiedEarlyAdopter" credentials.
 
 ## Building
 
-### Set environment variables
+### Set Frontend Environment Variables
 
 Before building the wasm you need to specify the environment variables of the context you are building.
+
+There is a script that reads the canister ids and local replica to create the env vars: `DFX_NETWORK=local ./scripts/create-env-vars.sh`.
+
+The `DFX_NETWORK=local` is needed to get the canister ids from the dfx replica.
 
 The needed env vars are:
 
@@ -41,7 +45,8 @@ Prepare the environment before running them:
 
 * Start local replica: `dfx start`. From the root directory.
 * Deploy canisters: `dfx deploy`. From the root directory.
-* Populate `frontend/.env` manually. Script pending.
+* Populate `frontend/.env` with `DFX_NETWORK=local ./scripts/create-env-vars.sh`. From `/frontend` directory.
 * Run frontend server: `npm run dev`. From the `/frontend` directory.
+* Run e2e tests: `npm run test:e2e`. From the `/frontend` directory.
 
 **NOTE: Careful with the bash env vars which override the ones in `.env` file.**
