@@ -7,6 +7,7 @@ const { title } = Astro.props;
 
 import Success from "../components/Success.astro";
 import ToastError from "../components/ToastError.astro";
+import content from "../contents/index.json";
 ---
 
 <!doctype html>
@@ -15,7 +16,15 @@ import ToastError from "../components/ToastError.astro";
     <meta charset="UTF-8" />
     <meta name="description" content="Astro description" />
     <meta name="viewport" content="width=device-width" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta property="og:title" content={content.meta.title} />
+    <meta property="og:description" content={content.meta.description} />
+    <meta property="og:url" content={content.meta.url} />
+    <meta property="og:image" content={content.meta.og_image} />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={content.meta.title} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.png" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
   </head>
@@ -113,12 +122,14 @@ import ToastError from "../components/ToastError.astro";
       })
     });
   };
-
+  
+  
   // select the templates for the different pages / states
   const $templateSuccess = document.getElementById('success') as HTMLTemplateElement;
-
+  
   // wrap containing the app
   const $app = document.querySelector('[data-app]') as HTMLDivElement;
+  $app.innerHTML = $templateSuccess.innerHTML;
 
   const handleClick = async (e: MouseEvent) => {
     // make sure the event target is a link
@@ -344,10 +355,18 @@ import ToastError from "../components/ToastError.astro";
     margin-top: 0;
     line-height: 1;
   }
+
   .title--main {
     font-size: var(--rst-title--main);
     position: relative;
     margin-top: 0.3em;
+
+    display: flex;
+    flex-direction: column;
+  }
+
+  .title--main span {
+    z-index: 2;
   }
 
   .title--success {
@@ -368,7 +387,7 @@ import ToastError from "../components/ToastError.astro";
   .title--success::after {
     position: absolute;
     top: 100%;
-    left: -2.5%;
+    left: 0;
     content: '';
     display: block;
     width: 90%;
@@ -377,6 +396,7 @@ import ToastError from "../components/ToastError.astro";
     background-size: contain;
     margin-top: var(--rs-gutter);
     transform: translateY(-50%);
+    z-index: 1;
   }
   .title--section {
     font-size: var(--rst-title--section);
@@ -395,7 +415,7 @@ import ToastError from "../components/ToastError.astro";
     border: 0;
     font-size: var(--rst-button);
     box-shadow: inset 0 0 0 var(--rs-line--fat) rgba(255 255 255 / .5);
-    padding: calc(var(--rs-gutter) * .75) calc(2 * var(--rs-gutter) + 4rem) calc(var(--rs-gutter) * .75) var(--rs-gutter);
+    padding: var(--rs-gutter) calc(var(--rs-gutter) + var(--rs-gutter--large) + 4rem) var(--rs-gutter) var(--rs-gutter--large);
     font-weight: 600;
     width: max-content;
     transition: box-shadow .3s ease;
@@ -410,7 +430,7 @@ import ToastError from "../components/ToastError.astro";
     height: 2rem;
     background: url('/ii-symbol.webp') no-repeat;
     background-size: contain;
-    right: var(--rs-gutter);
+    right: var(--rs-gutter--large);
     top: 50%;
     transform: translateY(-50%);
     pointer-events: none;
@@ -529,6 +549,11 @@ import ToastError from "../components/ToastError.astro";
   .header__links {
     display: flex;
     gap: var(--rs-gutter);
+    align-items: center;
+  }
+
+  .header__link {
+    display: flex;
     align-items: center;
   }
 
@@ -713,7 +738,7 @@ import ToastError from "../components/ToastError.astro";
     text-align: left;
 
     display: flex;
-    gap: calc(4 * var(--rs-gutter));
+    gap: calc(8 * var(--rs-gutter));
   }
 
   .card--split {
@@ -731,6 +756,7 @@ import ToastError from "../components/ToastError.astro";
     align-items: center;
     padding: var(--rs-gutter);
     box-sizing: border-box;
+    flex: 3;
   }
 
   .card__cta {
@@ -739,7 +765,7 @@ import ToastError from "../components/ToastError.astro";
     align-items: flex-start;
     justify-content: center;
     padding: calc(var(--rs-gutter) * 4) calc(var(--rs-gutter) * 5);
-    flex: 0 1 25%;
+    flex: 1;
 
     background: var(--rc-cardBackground--highlight);
     color: var(--rc-onCardBackground--highlight);
@@ -781,7 +807,14 @@ import ToastError from "../components/ToastError.astro";
     height: auto;
     flex: 0 0 40%;
   }
-  @media screen and (max-width: 640px){
+
+  @media screen and (max-width: 1200px){
+    .card--intro {
+      gap: calc(4 * var(--rs-gutter));
+    }
+  }
+
+  @media screen and (max-width: 630px){
     .innovation-cards {
       grid-template-columns: 1fr;
     }

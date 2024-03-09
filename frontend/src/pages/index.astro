@@ -24,7 +24,10 @@ import Logos from "../components/Logos.astro";
   <main>
     <article class="card card--intro design-width">
       <div class="card__body">
-        <h1 class="title title--main">{content.mainTitle}</h1>
+        <h1 class="title title--main">
+          <span>{content.mainTitle1}</span>
+          <span>{content.mainTitle2}</span>
+        </h1>
         <p>{content.mainLead}</p>
         <button class="button" data-tid="login-button" data-login>{content.iibuttontext}</button>
       </div>
