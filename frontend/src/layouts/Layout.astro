@@ -129,7 +129,6 @@ import content from "../contents/index.json";
   
   // wrap containing the app
   const $app = document.querySelector('[data-app]') as HTMLDivElement;
-  // $app.innerHTML = $templateSuccess.innerHTML;
 
   const handleClick = async (e: MouseEvent) => {
     // make sure the event target is a link
@@ -383,9 +382,18 @@ import content from "../contents/index.json";
     margin: 0 auto 1em;
   }
 
+  .title--sub {
+    display: flex;
+    flex-direction: column;
+  }
+
   @media screen and (max-width: 640px){
     .title--main {
       margin-bottom: 1em;
+    }
+
+    .title--sub {
+      display: block;
     }
   }
  
@@ -480,7 +488,7 @@ import content from "../contents/index.json";
     color: var(--rc-onButtonBackground--inverted);
   }
 
-  @media screen and (max-width: 640px){
+  @media screen and (max-width: 1024px){
     .button {
       width: auto;
     }
@@ -787,6 +795,13 @@ import content from "../contents/index.json";
     flex: 0 0 50%;
     transform: translate(0);
     align-self: center;
+  }
+
+  @media screen and (max-width: 1024px){
+    .card__cta {
+      padding: calc(var(--rs-gutter) * 4) 5%;
+      flex: 2;
+    }
   }
 
   @media screen and (max-width: 640px){

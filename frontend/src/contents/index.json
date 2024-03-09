@@ -84,7 +84,11 @@
   "connectionButton": "Let's go!",
 
   "confirmationTitle": "Congratulations!",
-  "confirmationTitle2": "You’ve earned the Early Adopter credential.",
+  "confirmationTitle2_1": "You’ve",
+  "confirmationTitle2_2": "earned",
+  "confirmationTitle2_3": "the Early",
+  "confirmationTitle2_4": "Adopter",
+  "confirmationTitle2_5": "credential.",
   "confirmationLead": "Use this credential to join an exclusive chatroom on Openchat.",
   "confirmationButton": "Join the OpenChat group",
   "confirmationLink": "or view credential on Internet Identity",
