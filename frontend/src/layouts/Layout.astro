@@ -129,7 +129,7 @@ import content from "../contents/index.json";
   
   // wrap containing the app
   const $app = document.querySelector('[data-app]') as HTMLDivElement;
-  $app.innerHTML = $templateSuccess.innerHTML;
+  // $app.innerHTML = $templateSuccess.innerHTML;
 
   const handleClick = async (e: MouseEvent) => {
     // make sure the event target is a link
@@ -249,7 +249,6 @@ import content from "../contents/index.json";
     --rc-toast-border: var(--vc-light-grey);
     --rc-toast-background--error: var(--vc-brand-pink--light);
     
-    
     /**	vs: value size (to use in other vairables) */
     --vs-electron: 1px;
     
@@ -300,6 +299,13 @@ import content from "../contents/index.json";
     --design-max-width: 147rem;
   }
 
+  @media screen and (max-width: 1024px){
+    :root {
+      --rs-inline-layout: var(--rs-gutter--large);
+      --rst-title--main: var(--vs-hippo);
+    }
+  }
+
   @media screen and (max-width: 640px){
     :root {
       --rs-inline-layout: var(--rs-gutter);
@@ -307,7 +313,7 @@ import content from "../contents/index.json";
       --vs-electron: 1px;
 
       /** rst: reference size text (use these in actual CSS) */
-      --rst-title--main: var(--vs-tiger);
+      --rst-title--main: var(--vs-horse);
       --rst-title--section: var(--vs-wolf);
       --rst-title--subsection: var(--vs-wolf);
       --rst-body: var(--vs-cat);
@@ -557,7 +563,7 @@ import content from "../contents/index.json";
     align-items: center;
   }
 
-  @media screen and (max-width: 640px){
+  @media screen and (max-width: 1024px){
     .header__links {
       display: none;
     }
@@ -693,7 +699,8 @@ import content from "../contents/index.json";
     content: '';
     position: absolute;
     top: 0;
-    left: 0;
+    /* So that it overlaps a little with the steps__body */
+    left: 1px;
     width: var(--rs-border-radius);
     height: var(--rs-border-radius);
     background: var(--rc-cardBackground);
@@ -808,13 +815,13 @@ import content from "../contents/index.json";
     flex: 0 0 40%;
   }
 
-  @media screen and (max-width: 1200px){
+  @media screen and (max-width: 1300px) {
     .card--intro {
       gap: calc(4 * var(--rs-gutter));
     }
   }
 
-  @media screen and (max-width: 630px){
+  @media screen and (max-width: 1024px){
     .innovation-cards {
       grid-template-columns: 1fr;
     }
@@ -824,8 +831,16 @@ import content from "../contents/index.json";
       overflow: clip;
     }
     .card__image {
-      width: 80%;
-      flex: 0 0 80%;
+      width: 40%;
+      flex: 0 0 40%;
+      align-self: flex-end;
+    }
+  }
+
+  @media screen and (max-width: 640ox){
+    .card__image {
+      width: 60%;
+      flex: 0 0 60%;
       align-self: flex-end;
       transform: translateX(20%);
     }
