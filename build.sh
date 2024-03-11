@@ -8,6 +8,7 @@ cd "$EARLY_ADOPTER_ISSUER_DIR"
 
 # Build the frontend
 cd frontend/
+npm ci
 npm run build 
 cd ../
 
