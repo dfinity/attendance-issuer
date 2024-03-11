@@ -30,7 +30,7 @@ import content from "../contents/index.json";
   </head>
   <body>
     <!-- data-app is also used to add the canister id as data-canister-id -->
-    <div data-app>
+    <div data-app class="slot-wrapper">
       <slot />
     </div>
     <div id="busy" class="busy hide">
@@ -126,6 +126,7 @@ import content from "../contents/index.json";
   
   // select the templates for the different pages / states
   const $templateSuccess = document.getElementById('success') as HTMLTemplateElement;
+  const $bodyElement = document.querySelector("body") as HTMLBodyElement;
   
   // wrap containing the app
   const $app = document.querySelector('[data-app]') as HTMLDivElement;
@@ -139,6 +140,8 @@ import content from "../contents/index.json";
 
       if (status.status === 200) {
         $app.innerHTML = $templateSuccess.innerHTML;
+        // Needed to apply custom styles to the body
+        $bodyElement.classList.add("success");
       }
 
       if (status.status === 400) {
@@ -343,6 +346,14 @@ import content from "../contents/index.json";
     scrollbar-gutter: stable;
   }
 
+  body.success {
+    box-sizing: border-box;
+    min-height: 100vh;
+    display: flex;
+
+    padding-bottom: var(--rs-gutter);
+  }
+
   a {
     color: inherit;
     text-decoration: none;
@@ -351,6 +362,22 @@ import content from "../contents/index.json";
   img {
     max-width: 100%;
     height: auto;
+  }
+
+  body.success .slot-wrapper, body.success main {
+    display: flex;
+    width: 100%;
+  }
+
+  @media screen and (max-width: 640px){
+    body {
+      padding: var(--vs-mouse);
+      padding-bottom: 0;
+    }
+
+    body.success {
+      padding-bottom: var(--vs-mouse);
+    }
   }
 
   .title {
@@ -385,6 +412,10 @@ import content from "../contents/index.json";
   .title--sub {
     display: flex;
     flex-direction: column;
+  }
+
+  .title--sub span {
+    line-height: 1.2;
   }
 
   @media screen and (max-width: 640px){
@@ -758,6 +789,8 @@ import content from "../contents/index.json";
 
   .card--split {
     display: flex;
+    width: 100%;
+    box-sizing: border-box;
     margin: 0;
     background: var(--rc-cardBackground--inverted);
     color: var(--rc-onCardBackground--inverted);
@@ -774,25 +807,48 @@ import content from "../contents/index.json";
     flex: 3;
   }
 
+  @media screen and (max-width: 1500px){
+    .card__message {
+      flex: 2;
+    }
+  }
+  
+  .card__main__content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+  }
+
   .card__cta {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     justify-content: center;
-    padding: calc(var(--rs-gutter) * 4) calc(var(--rs-gutter) * 5);
-    flex: 1;
-
+    flex: 2;
+    
+    /* To align contents of card__cta and card__message we add an extra margin here */
+    padding-top: calc(var(--rs-gutter) + 41px);
+    
     background: var(--rc-cardBackground--highlight);
     color: var(--rc-onCardBackground--highlight);
     text-align: left;
     border-radius: var(--rs-border-radius);
     box-sizing: border-box;
   }
+  
+  .card__cta__content {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    justify-content: start;
+    padding: 0 10%;
+  }
 
   .card--split .card__image {
     width: 50%;
     height: auto;
-    flex: 0 0 50%;
     transform: translate(0);
     align-self: center;
   }
@@ -801,6 +857,11 @@ import content from "../contents/index.json";
     .card__cta {
       padding: calc(var(--rs-gutter) * 4) 5%;
       flex: 2;
+    }
+
+    .card__cta__content {
+      /* Padding already applied in parent */
+      padding: 0;
     }
   }
 
@@ -827,7 +888,6 @@ import content from "../contents/index.json";
   .card__image {
     width: 50%;
     height: auto;
-    flex: 0 0 40%;
   }
 
   @media screen and (max-width: 1300px) {
@@ -847,7 +907,6 @@ import content from "../contents/index.json";
     }
     .card__image {
       width: 40%;
-      flex: 0 0 40%;
       align-self: flex-end;
     }
   }
@@ -855,7 +914,6 @@ import content from "../contents/index.json";
   @media screen and (max-width: 640ox){
     .card__image {
       width: 60%;
-      flex: 0 0 60%;
       align-self: flex-end;
       transform: translateX(20%);
     }

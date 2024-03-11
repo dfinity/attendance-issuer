@@ -7,22 +7,26 @@ import Logos from "./Logos.astro";
   <article class="card card--split">
     <div class="card__message">
       <Logos />
-      <div class="card__image">
-        <img src={content.confirmationImg} alt="Internet Identity" />
+      <div class="card__main__content">
+        <div class="card__image">
+          <img src={content.confirmationImg} alt="Internet Identity" />
+        </div>
+        <h1 class="title title--success" data-tid="success-page-title">{content.confirmationTitle}</h1>
       </div>
-      <h1 class="title title--success" data-tid="success-page-title">{content.confirmationTitle}</h1>
     </div>
     <div class="card__cta">
-      <h2 class="title title--sub">
-        <span>{content.confirmationTitle2_1}</span>
-        <span>{content.confirmationTitle2_2}</span>
-        <span>{content.confirmationTitle2_3}</span>
-        <span>{content.confirmationTitle2_4}</span>
-        <span>{content.confirmationTitle2_5}</span>
-      </h2>
-      <p>{content.confirmationLead}</p>
-      <a href={content.openchaturl} class="button button--inverted button--oc">{content.confirmationButton}</a>
-      <a href={content.openchaturl} class="link">{content.confirmationLink}</a>
+      <div class="card__cta__content">
+        <h2 class="title title--sub">
+          <span>{content.confirmationTitle2_1}</span>
+          <span>{content.confirmationTitle2_2}</span>
+          <span>{content.confirmationTitle2_3}</span>
+          <span>{content.confirmationTitle2_4}</span>
+          <span>{content.confirmationTitle2_5}</span>
+        </h2>
+        <p>{content.confirmationLead}</p>
+        <a href={content.openchaturl} class="button button--inverted button--oc">{content.confirmationButton}</a>
+        <a href={content.openchaturl} class="link">{content.confirmationLink}</a>
+      </div>
     </div>
   </article>
 </main>
