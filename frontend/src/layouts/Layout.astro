@@ -8,6 +8,7 @@ const { title } = Astro.props;
 import Success from "../components/Success.astro";
 import ToastError from "../components/ToastError.astro";
 import content from "../contents/index.json";
+import socialImage from "../assets/og-image.png";
 ---
 
 <!doctype html>
@@ -19,12 +20,12 @@ import content from "../contents/index.json";
     <meta property="og:title" content={content.meta.title} />
     <meta property="og:description" content={content.meta.description} />
     <meta property="og:url" content={content.meta.url} />
-    <meta property="og:image" content={content.meta.og_image} />
+    <meta property="og:image" content={socialImage.src} />
     <meta property="og:image:type" content="image/png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
+    <meta property="og:image:width" content={String(socialImage.width)} />
+    <meta property="og:image:height" content={String(socialImage.height)} />
     <meta property="og:image:alt" content={content.meta.title} />
-    <link rel="icon" type="image/svg+xml" href="/favicon.png" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
   </head>
@@ -111,7 +112,7 @@ import content from "../contents/index.json";
         },
         onError: (err) => {
           // Show nothing if the user cancelled the flow.
-          if (err !== "UserInterrupt" || true) {
+          if (err !== "UserInterrupt") {
             showErrorToast("The sign-in process was aborted or did not succeed.");
           }
           busyScreen.classList.add('hide');
@@ -126,7 +127,6 @@ import content from "../contents/index.json";
   
   // select the templates for the different pages / states
   const $templateSuccess = document.getElementById('success') as HTMLTemplateElement;
-  const $bodyElement = document.querySelector("body") as HTMLBodyElement;
   
   // wrap containing the app
   const $app = document.querySelector('[data-app]') as HTMLDivElement;
@@ -141,7 +141,7 @@ import content from "../contents/index.json";
       if (status.status === 200) {
         $app.innerHTML = $templateSuccess.innerHTML;
         // Needed to apply custom styles to the body
-        $bodyElement.classList.add("success");
+        document.body.classList.add("body--success");
       }
 
       if (status.status === 400) {
@@ -344,10 +344,10 @@ import content from "../contents/index.json";
     padding-bottom: 0;
     margin: 0;
     scrollbar-gutter: stable;
+    box-sizing: border-box;
   }
 
-  body.success {
-    box-sizing: border-box;
+  body.body--success {
     min-height: 100vh;
     display: flex;
 
@@ -364,7 +364,7 @@ import content from "../contents/index.json";
     height: auto;
   }
 
-  body.success .slot-wrapper, body.success main {
+  .body--success .slot-wrapper, .body--success main {
     display: flex;
     width: 100%;
   }
@@ -375,7 +375,7 @@ import content from "../contents/index.json";
       padding-bottom: 0;
     }
 
-    body.success {
+    body.body--success {
       padding-bottom: var(--vs-mouse);
     }
   }
