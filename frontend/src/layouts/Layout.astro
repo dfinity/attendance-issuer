@@ -603,6 +603,11 @@ import content from "../contents/index.json";
   }
 
   @media screen and (max-width: 1024px){
+
+    .header {
+      padding: var(--rs-gutter) calc(var(--rs-gutter) * 0.5);
+      justify-content: center;
+    }
     .header__links {
       display: none;
     }
@@ -638,28 +643,31 @@ import content from "../contents/index.json";
 
   .logos {
     display: flex;
-    align-items: center;
+    align-items: stretch;
+    gap: var(--rs-gutter);
   }
   .logos__logo {
     width: 15.3rem;
-    margin-right: var(--rs-gutter);
-    position: relative;
+    display: flex;
+    align-items: center;
   }
-  .logos__logo + .logos__logo {
-    margin-right: 0;
-    padding-left: var(--rs-gutter);
+
+  @media screen and (max-width: 640px){
+
+    .logos {
+      justify-content: space-around;
+    }
+    .logos__logo {
+      width: 12rem;
+    }
   }
-  .logos__logo + .logos__logo::before {
-    position: absolute;
-    content: '';
-    display: block;
+
+  .logos__divider {
     width: var(--rs-line);
-    left: 0;
-    top: 0;
-    bottom: 0;
     background: var(--rc-line);
     opacity: 0.2;
   }
+
   .pill {
     background: var(--rc-pillBackground);
     color: var(--rc-onPillBackground);
