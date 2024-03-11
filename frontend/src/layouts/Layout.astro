@@ -551,13 +551,10 @@ import socialImage from "../assets/og-image.png";
     max-width: calc(var(--design-max-width) * .35);
   }
 
-  .section-top {
-    position: fixed;
-    top: var(--rs-gutter);
-    left: var(--rs-gutter);
-    right: var(--rs-gutter);
-    z-index: 999;
+  .border-radius {
+
   }
+
   .header,
   .footer {
     background: var(--rc-navbar);
@@ -565,6 +562,8 @@ import socialImage from "../assets/og-image.png";
     font-size: var(--rst-header);
 
     border-radius: var(--rs-border-radius);
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
 
     display: flex;
     justify-content: space-between;
@@ -577,9 +576,6 @@ import socialImage from "../assets/og-image.png";
     font-size: var(--rst-footer);
     background: var(--rc-footer);
     color: var(--rc-onFooter);
-
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
 
     margin-top: var(--rs-gutter);
     padding: var(--rs-gutter) var(--rs-inline-layout);
@@ -775,6 +771,8 @@ import socialImage from "../assets/og-image.png";
     background: var(--rc-cardBackground);
     color: var(--rc-onCardBackground);
     border-radius: var(--rs-border-radius);
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
     padding: var(--rs-gutter) 20%;
     text-align: center;
   }
@@ -787,7 +785,7 @@ import socialImage from "../assets/og-image.png";
   .card--intro {
     background: var(--rc-cardBackground--inverted);
     color: var(--rc-onCardBackground--inverted);
-    padding: calc(var(--rs-gutter) * 4) var(--rs-inline-layout) calc(var(--rs-gutter) * 2);
+    padding: calc(var(--rs-gutter) * 0.5) var(--rs-inline-layout) calc(var(--rs-gutter) * 2);
     margin-bottom: var(--rs-gutter);
     text-align: left;
 
