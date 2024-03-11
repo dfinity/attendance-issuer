@@ -1,5 +1,7 @@
 import { defineConfig } from "astro/config";
 
+import tailwind from "@astrojs/tailwind";
+
 // https://astro.build/config
 export default defineConfig({
   vite: {
@@ -7,9 +9,10 @@ export default defineConfig({
       esbuildOptions: {
         define: {
           // Needed because the agent uses `global` to build the Actor
-          global: "globalThis",
-        },
-      },
-    },
+          global: "globalThis"
+        }
+      }
+    }
   },
+  integrations: [tailwind()]
 });

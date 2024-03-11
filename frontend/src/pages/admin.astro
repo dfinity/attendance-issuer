@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en" class="h-full bg-gray-100">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content="Astro description" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="robots" content="noindex">
+    <meta name="generator" content={Astro.generator} />
+    <title>Early Adopter Admin</title>
+  </head>
+  <body class="h-full">
+    <!-- data-app is also used to add the canister id as data-canister-id -->
+    <div class="min-h-full">
+      <header class="bg-white shadow">
+        <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+          <h1 class="text-3xl font-bold tracking-tight text-gray-900">Admin Panel</h1>
+        </div>
+      </header>  
+      <main data-app>
+        <section class="mx-auto max-w-7xl py-6 px-4 sm:px-6 lg:px-8">
+          <div class="flex justify-between gap-x-6 py-5 border-b border-b-1 border-gray-300">
+            <h3 class="text-lg">Users</h3>
+            <p class="text-base">Credentials Enabled</p>
+          </div>
+          <ul role="list" class="divide-y divide-gray-300" id="users"></ul>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
+
+<script>
+  type User = {
+    id: string,
+    credentialsEnabled: boolean,
+    joinedTimestampSeconds: number,
+    role: "user" | "admin"
+  };
+  const users: User[] = [
+    { id: "2vtpp-r6lcd-cbfas-qbabv-wxrv5-lsrkj-c4dtb-6ets3-srlqe-xpuzf-vqe", credentialsEnabled: true, joinedTimestampSeconds: 1710154989278, role: "user" },
+    { id: "7uzsk-crarb-mog7e-5bzif-bvdgk-rn2ns-t2wer-okp2f-n754b-ultve-cae", credentialsEnabled: false, joinedTimestampSeconds: 1710104989278, role: "admin" },
+    { id: "exxsk-hsba2-pcof7-3y3fh-bmnoy-gdrct-3piyl-yjeye-klmw4-vjlnw-qae", credentialsEnabled: true, joinedTimestampSeconds: 1710054989278, role: "user" },
+    { id: "n77xm-f4vng-k5wb6-4brq4-5556i-gw6fj-kev7c-fkxq4-zxbpd-crfhy-nae", credentialsEnabled: true, joinedTimestampSeconds: 1710014989278, role: "user" },
+    { id: "wsrsv-xxpqb-owhkn-fdslo-3moob-j3amm-zyqgk-s5bea-d6sld-45s4f-bae", credentialsEnabled: false, joinedTimestampSeconds: 1710000989278, role: "user" },
+  ];
+  const options: Intl.DateTimeFormatOptions = {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+  };
+
+  const renderInitialList = (users: User[]) => {
+    const usersList = document.getElementById("users") as HTMLElement;
+    const usersElements = users.map((user) => {
+      const element = `
+        <div class="flex min-w-0 gap-x-4">
+          <div class="min-w-0 flex-auto">
+            <p class="text-sm truncate font-semibold leading-6 text-gray-900">${user.id}</p>
+            <p class="mt-1 truncate text-xs leading-5 text-gray-500">${new Date(user.joinedTimestampSeconds).toLocaleString("en", options)}</p>
+          </div>
+        </div>
+        <div class="shrink-0 sm:flex sm:flex-col sm:items-end">
+          <div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
+            <!-- Toggle Switch -->
+            <input type="checkbox" ${user.credentialsEnabled ? "checked" : ""} name="toggle" id="${user.id}-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-2 appearance-none cursor-pointer"/>
+            <!-- Toggle Label -->
+            <label for="${user.id}-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+          </div>
+        </div>
+      `;
+      const liElement = document.createElement("li");
+      liElement.classList.add("flex", "justify-between", "gap-x-6", "py-5");
+      liElement.innerHTML = element;
+      return liElement;
+    });
+    usersList.append(...usersElements);
+  };
+
+  renderInitialList(users);
+</script>
+
+<style is:global>
+  .toggle-checkbox:checked + .toggle-label {
+    background-color: #4f46e5; /* Tailwind's 'indigo-600' */
+  }
+
+  /* Optional: Move the toggle knob to the right when checked */
+  .toggle-checkbox:checked {
+    transform: translateX(1rem); /* Adjust this value based on the size of your toggle */
+  }
+</style>
