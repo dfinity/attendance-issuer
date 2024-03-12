@@ -39,9 +39,8 @@ const handleFlowFinished = (evnt: MessageEvent) => {
     if (resultElement) {
       resultElement.innerText = `Alias: ${alias}\nCredential: ${credential}`;
     }
-
-    iiWindow?.close();
   } finally {
+    iiWindow?.close();
     window.removeEventListener("message", handleFlowFinished);
   }
 }
