@@ -2,6 +2,7 @@
 import Layout from "../layouts/Layout.astro";
 import content from "../contents/index.json";
 import Logos from "../components/Logos.astro";
+import GithubIcon from "../assets/GithubIcon.svg";
 ---
 
 <Layout title={content.meta.title}>
@@ -17,7 +18,7 @@ import Logos from "../components/Logos.astro";
             </a>
           ))
         }
-        <a class="header__link" href={content.githublink} target="_blank" rel="nofollow"><img src="/github.webp" alt="GitHub" /></a>
+        <a class="header__link" href={content.githublink} target="_blank" rel="nofollow"><img src={GithubIcon.src} alt="GitHub" /></a>
       </aside>
     </div>
     <article class="card card--intro design-width">
@@ -61,7 +62,7 @@ import Logos from "../components/Logos.astro";
         <div class="innovation-cards">
           {
             content.innovationCards.map((card) => (
-              <aside class:list={["card", `card--${card.type}`]}>
+              <aside class:list={["card", "card--innovation" ,`card--${card.type}`]}>
                 <img class="card__image" src={card.image} alt={card.title} />
                 <h3 class="card__title">{card.title}</h3>
                 <p class="card__body">{card.body}</p>
@@ -77,7 +78,7 @@ import Logos from "../components/Logos.astro";
       <p class="footer__copyright">
         <a href={content.copyright.link} target="_blank" rel="nofollow">{content.copyright.text}</a>
         <a href={content.githublink} target="_blank" rel="nofollow">
-          <img src="/github.webp" alt="GitHub" />
+          <img src={GithubIcon.src} alt="GitHub" />
         </a>
       </p>
     </footer>
