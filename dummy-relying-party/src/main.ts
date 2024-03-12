@@ -1,7 +1,8 @@
 import { AuthClient } from "@dfinity/auth-client";
+import { decodeJwt } from "jose";
 
 const II_URL = "http://bd3sg-teaaa-aaaaa-qaaba-cai.localhost:8080";
-const ISSUER_ORIGIN = "http://bkyz2-fmaaa-aaaaa-qaaaq-cai.localhost:8080";
+const ISSUER_ORIGIN = "http://localhost:4321";
 const ISSUER_CANISTER_ID = "bkyz2-fmaaa-aaaaa-qaaaq-cai";
 const loginButton = document.getElementById("login");
 const vcButton = document.getElementById("start-vc");
@@ -20,9 +21,29 @@ loginButton?.addEventListener("click", async () => {
   });
 });
 
+let iiWindow: Window | null = null;
 const handleFlowFinished = (evnt: MessageEvent) => {
-  console.log('in handleFlowFinished');
-  console.log(evnt.data);
+  try {
+    // Make the presentation presentable
+    const verifiablePresentation = evnt.data?.result?.verifiablePresentation;
+    if (verifiablePresentation === undefined) {
+      return console.error("No verifiable presentation found");
+    }
+
+    const ver = decodeJwt(verifiablePresentation) as any;
+    const creds = ver.vp.verifiableCredential;
+    const [alias, credential] = creds.map((cred: string) =>
+      JSON.stringify(decodeJwt(cred), null, 2)
+    );
+    const resultElement = document.getElementById("vc-result");
+    if (resultElement) {
+      resultElement.innerText = `Alias: ${alias}\nCredential: ${credential}`;
+    }
+
+    iiWindow?.close();
+  } finally {
+    window.removeEventListener("message", handleFlowFinished);
+  }
 }
 const handleFlowReady = (evnt: MessageEvent) => {
   if (evnt.data?.method !== "vc-flow-ready") {
@@ -41,6 +62,9 @@ const handleFlowReady = (evnt: MessageEvent) => {
       },
       credentialSpec: {
         credentialType: "EarlyAdopter",
+        arguments: {
+          sinceYear: 2024
+        }
       },
       credentialSubject: principal,
     },
@@ -53,5 +77,5 @@ vcButton?.addEventListener("click", async () => {
   window.addEventListener("message", handleFlowReady);
   const url = new URL(II_URL);
   url.pathname = "vc-flow/";
-  window.open(url, "_blank");
+  iiWindow = window.open(url, "_blank");
 });
