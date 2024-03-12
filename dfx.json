@@ -24,6 +24,7 @@
         "entrypoint": "dummy-relying-party/dist/index.html"
       },
       "source": ["dummy-relying-party/dist"],
+      "build": "cd ./dummy-relying-party && npm ci && npm run build",
       "type": "assets"
     }
   },
