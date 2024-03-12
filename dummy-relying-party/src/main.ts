@@ -1,9 +1,9 @@
 import { AuthClient } from "@dfinity/auth-client";
 import { decodeJwt } from "jose";
 
-const II_URL = "http://bd3sg-teaaa-aaaaa-qaaba-cai.localhost:8080";
-const ISSUER_ORIGIN = "http://localhost:4321";
-const ISSUER_CANISTER_ID = "bkyz2-fmaaa-aaaaa-qaaaq-cai";
+const II_URL = import.meta.env.VITE_INTERNET_IDENTITY_URL;
+const ISSUER_ORIGIN = import.meta.env.VITE_ISSUER_ORIGIN;
+const ISSUER_CANISTER_ID = import.meta.env.VITE_ISSUER_CANISTER_ID;
 const loginButton = document.getElementById("login");
 const vcButton = document.getElementById("start-vc");
 const loginStatus = document.getElementById("login-status");
@@ -15,7 +15,7 @@ loginButton?.addEventListener("click", async () => {
       loginButton?.classList.add("hidden");
       vcButton?.classList.remove("hidden");
       if (loginStatus) {
-        loginStatus.innerText = "Logged in";
+        loginStatus.innerText = `Logged in as ${authClient.getIdentity().getPrincipal().toText()}`;
       }
     },
   });
