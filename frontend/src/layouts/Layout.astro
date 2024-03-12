@@ -7,6 +7,8 @@ const { title } = Astro.props;
 
 import Success from "../components/Success.astro";
 import ToastError from "../components/ToastError.astro";
+import content from "../contents/index.json";
+import socialImage from "../assets/og-image.png";
 ---
 
 <!doctype html>
@@ -15,13 +17,21 @@ import ToastError from "../components/ToastError.astro";
     <meta charset="UTF-8" />
     <meta name="description" content="Astro description" />
     <meta name="viewport" content="width=device-width" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta property="og:title" content={content.meta.title} />
+    <meta property="og:description" content={content.meta.description} />
+    <meta property="og:url" content={content.meta.url} />
+    <meta property="og:image" content={socialImage.src} />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content={String(socialImage.width)} />
+    <meta property="og:image:height" content={String(socialImage.height)} />
+    <meta property="og:image:alt" content={content.meta.title} />
+    <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
   </head>
   <body>
     <!-- data-app is also used to add the canister id as data-canister-id -->
-    <div data-app>
+    <div data-app class="slot-wrapper">
       <slot />
     </div>
     <div id="busy" class="busy hide">
@@ -102,7 +112,7 @@ import ToastError from "../components/ToastError.astro";
         },
         onError: (err) => {
           // Show nothing if the user cancelled the flow.
-          if (err !== "UserInterrupt" || true) {
+          if (err !== "UserInterrupt") {
             showErrorToast("The sign-in process was aborted or did not succeed.");
           }
           busyScreen.classList.add('hide');
@@ -113,10 +123,11 @@ import ToastError from "../components/ToastError.astro";
       })
     });
   };
-
+  
+  
   // select the templates for the different pages / states
   const $templateSuccess = document.getElementById('success') as HTMLTemplateElement;
-
+  
   // wrap containing the app
   const $app = document.querySelector('[data-app]') as HTMLDivElement;
 
@@ -129,6 +140,8 @@ import ToastError from "../components/ToastError.astro";
 
       if (status.status === 200) {
         $app.innerHTML = $templateSuccess.innerHTML;
+        // Needed to apply custom styles to the body
+        document.body.classList.add("body--success");
       }
 
       if (status.status === 400) {
@@ -238,7 +251,6 @@ import ToastError from "../components/ToastError.astro";
     --rc-toast-border: var(--vc-light-grey);
     --rc-toast-background--error: var(--vc-brand-pink--light);
     
-    
     /**	vs: value size (to use in other vairables) */
     --vs-electron: 1px;
     
@@ -289,6 +301,13 @@ import ToastError from "../components/ToastError.astro";
     --design-max-width: 147rem;
   }
 
+  @media screen and (max-width: 1024px){
+    :root {
+      --rs-inline-layout: var(--rs-gutter--large);
+      --rst-title--main: var(--vs-hippo);
+    }
+  }
+
   @media screen and (max-width: 640px){
     :root {
       --rs-inline-layout: var(--rs-gutter);
@@ -296,7 +315,7 @@ import ToastError from "../components/ToastError.astro";
       --vs-electron: 1px;
 
       /** rst: reference size text (use these in actual CSS) */
-      --rst-title--main: var(--vs-tiger);
+      --rst-title--main: var(--vs-horse);
       --rst-title--section: var(--vs-wolf);
       --rst-title--subsection: var(--vs-wolf);
       --rst-body: var(--vs-cat);
@@ -325,6 +344,14 @@ import ToastError from "../components/ToastError.astro";
     padding-bottom: 0;
     margin: 0;
     scrollbar-gutter: stable;
+    box-sizing: border-box;
+  }
+
+  body.body--success {
+    min-height: 100vh;
+    display: flex;
+
+    padding-bottom: var(--rs-gutter);
   }
 
   a {
@@ -337,6 +364,22 @@ import ToastError from "../components/ToastError.astro";
     height: auto;
   }
 
+  .body--success .slot-wrapper, .body--success main {
+    display: flex;
+    width: 100%;
+  }
+
+  @media screen and (max-width: 640px){
+    body {
+      padding: var(--vs-mouse);
+      padding-bottom: 0;
+    }
+
+    body.body--success {
+      padding-bottom: var(--vs-mouse);
+    }
+  }
+
   .title {
     font-size: var(--rst-title--subsection);
     font-weight: 600;
@@ -344,10 +387,19 @@ import ToastError from "../components/ToastError.astro";
     margin-top: 0;
     line-height: 1;
   }
+
   .title--main {
     font-size: var(--rst-title--main);
     position: relative;
     margin-top: 0.3em;
+
+    /* display: flex; */
+    z-index: 100;
+    /* flex-direction: column; */
+  }
+
+  .title--main span {
+    z-index: 2;
   }
 
   .title--success {
@@ -358,17 +410,30 @@ import ToastError from "../components/ToastError.astro";
     margin: 0 auto 1em;
   }
 
+  .title--sub {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .title--sub span {
+    line-height: 1.2;
+  }
+
   @media screen and (max-width: 640px){
     .title--main {
       margin-bottom: 1em;
     }
+
+    .title--sub {
+      display: block;
+    }
   }
  
-  .title--main::after,
-  .title--success::after {
+  .title--main::before,
+  .title--success::before {
     position: absolute;
     top: 100%;
-    left: -2.5%;
+    left: 0;
     content: '';
     display: block;
     width: 90%;
@@ -377,6 +442,7 @@ import ToastError from "../components/ToastError.astro";
     background-size: contain;
     margin-top: var(--rs-gutter);
     transform: translateY(-50%);
+    z-index: 1;
   }
   .title--section {
     font-size: var(--rst-title--section);
@@ -395,11 +461,12 @@ import ToastError from "../components/ToastError.astro";
     border: 0;
     font-size: var(--rst-button);
     box-shadow: inset 0 0 0 var(--rs-line--fat) rgba(255 255 255 / .5);
-    padding: calc(var(--rs-gutter) * .75) calc(2 * var(--rs-gutter) + 4rem) calc(var(--rs-gutter) * .75) var(--rs-gutter);
+    padding: var(--rs-gutter) calc(var(--rs-gutter) + var(--rs-gutter--large) + 4rem) var(--rs-gutter) var(--rs-gutter--large);
     font-weight: 600;
     width: max-content;
     transition: box-shadow .3s ease;
     margin-top: var(--rs-stack-button);
+    cursor: pointer;
   }
 
   .button::after {
@@ -410,7 +477,7 @@ import ToastError from "../components/ToastError.astro";
     height: 2rem;
     background: url('/ii-symbol.webp') no-repeat;
     background-size: contain;
-    right: var(--rs-gutter);
+    right: var(--rs-gutter--large);
     top: 50%;
     transform: translateY(-50%);
     pointer-events: none;
@@ -454,7 +521,7 @@ import ToastError from "../components/ToastError.astro";
     color: var(--rc-onButtonBackground--inverted);
   }
 
-  @media screen and (max-width: 640px){
+  @media screen and (max-width: 1024px){
     .button {
       width: auto;
     }
@@ -486,13 +553,10 @@ import ToastError from "../components/ToastError.astro";
     max-width: calc(var(--design-max-width) * .35);
   }
 
-  .section-top {
-    position: fixed;
-    top: var(--rs-gutter);
-    left: var(--rs-gutter);
-    right: var(--rs-gutter);
-    z-index: 1;
+  .border-radius {
+
   }
+
   .header,
   .footer {
     background: var(--rc-navbar);
@@ -500,6 +564,8 @@ import ToastError from "../components/ToastError.astro";
     font-size: var(--rst-header);
 
     border-radius: var(--rs-border-radius);
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
 
     display: flex;
     justify-content: space-between;
@@ -512,9 +578,6 @@ import ToastError from "../components/ToastError.astro";
     font-size: var(--rst-footer);
     background: var(--rc-footer);
     color: var(--rc-onFooter);
-
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
 
     margin-top: var(--rs-gutter);
     padding: var(--rs-gutter) var(--rs-inline-layout);
@@ -532,7 +595,17 @@ import ToastError from "../components/ToastError.astro";
     align-items: center;
   }
 
-  @media screen and (max-width: 640px){
+  .header__link {
+    display: flex;
+    align-items: center;
+  }
+
+  @media screen and (max-width: 1024px){
+
+    .header {
+      padding: var(--rs-gutter) calc(var(--rs-gutter) * 0.5);
+      justify-content: center;
+    }
     .header__links {
       display: none;
     }
@@ -568,28 +641,31 @@ import ToastError from "../components/ToastError.astro";
 
   .logos {
     display: flex;
-    align-items: center;
+    align-items: stretch;
+    gap: var(--rs-gutter);
   }
   .logos__logo {
     width: 15.3rem;
-    margin-right: var(--rs-gutter);
-    position: relative;
+    display: flex;
+    align-items: center;
   }
-  .logos__logo + .logos__logo {
-    margin-right: 0;
-    padding-left: var(--rs-gutter);
+
+  @media screen and (max-width: 640px){
+
+    .logos {
+      justify-content: space-around;
+    }
+    .logos__logo {
+      width: 12rem;
+    }
   }
-  .logos__logo + .logos__logo::before {
-    position: absolute;
-    content: '';
-    display: block;
+
+  .logos__divider {
     width: var(--rs-line);
-    left: 0;
-    top: 0;
-    bottom: 0;
     background: var(--rc-line);
     opacity: 0.2;
   }
+
   .pill {
     background: var(--rc-pillBackground);
     color: var(--rc-onPillBackground);
@@ -668,7 +744,8 @@ import ToastError from "../components/ToastError.astro";
     content: '';
     position: absolute;
     top: 0;
-    left: 0;
+    /* So that it overlaps a little with the steps__body */
+    left: 1px;
     width: var(--rs-border-radius);
     height: var(--rs-border-radius);
     background: var(--rc-cardBackground);
@@ -699,6 +776,16 @@ import ToastError from "../components/ToastError.astro";
     padding: var(--rs-gutter) 20%;
     text-align: center;
   }
+  
+  .card.card--intro {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+
+  .body--success .card {
+    border-top-left-radius: var(--rs-border-radius);
+    border-top-right-radius: var(--rs-border-radius);
+  }
 
   .card--highlighted {
     background: var(--rc-cardBackground--highlight);
@@ -708,16 +795,18 @@ import ToastError from "../components/ToastError.astro";
   .card--intro {
     background: var(--rc-cardBackground--inverted);
     color: var(--rc-onCardBackground--inverted);
-    padding: calc(var(--rs-gutter) * 4) var(--rs-inline-layout) calc(var(--rs-gutter) * 2);
+    padding: calc(var(--rs-gutter) * 0.5) var(--rs-inline-layout) calc(var(--rs-gutter) * 2);
     margin-bottom: var(--rs-gutter);
     text-align: left;
 
     display: flex;
-    gap: calc(4 * var(--rs-gutter));
+    gap: calc(8 * var(--rs-gutter));
   }
 
   .card--split {
     display: flex;
+    width: 100%;
+    box-sizing: border-box;
     margin: 0;
     background: var(--rc-cardBackground--inverted);
     color: var(--rc-onCardBackground--inverted);
@@ -731,29 +820,65 @@ import ToastError from "../components/ToastError.astro";
     align-items: center;
     padding: var(--rs-gutter);
     box-sizing: border-box;
+    flex: 3;
+  }
+
+  @media screen and (max-width: 1500px){
+    .card__message {
+      flex: 2;
+    }
+  }
+  
+  .card__main__content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
   }
 
   .card__cta {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     justify-content: center;
-    padding: calc(var(--rs-gutter) * 4) calc(var(--rs-gutter) * 5);
-    flex: 0 1 25%;
-
+    flex: 2;
+    
+    /* To align contents of card__cta and card__message we add an extra margin here */
+    padding-top: calc(var(--rs-gutter) + 41px);
+    
     background: var(--rc-cardBackground--highlight);
     color: var(--rc-onCardBackground--highlight);
     text-align: left;
     border-radius: var(--rs-border-radius);
     box-sizing: border-box;
   }
+  
+  .card__cta__content {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    justify-content: start;
+    padding: 0 10%;
+  }
 
   .card--split .card__image {
     width: 50%;
     height: auto;
-    flex: 0 0 50%;
     transform: translate(0);
     align-self: center;
+  }
+
+  @media screen and (max-width: 1024px){
+    .card__cta {
+      padding: calc(var(--rs-gutter) * 4) 5%;
+      flex: 2;
+    }
+
+    .card__cta__content {
+      /* Padding already applied in parent */
+      padding: 0;
+    }
   }
 
   @media screen and (max-width: 640px){
@@ -777,11 +902,24 @@ import ToastError from "../components/ToastError.astro";
     margin-top: var(--rs-stack-section);
   }
   .card__image {
-    width: 50%;
     height: auto;
-    flex: 0 0 40%;
   }
-  @media screen and (max-width: 640px){
+
+  .card .card__image {
+    width: 60%;
+  }
+
+  .card.card--innovation {
+    padding-top: var(--rs-gutter--large);
+  }
+
+  @media screen and (max-width: 1300px) {
+    .card--intro {
+      gap: calc(4 * var(--rs-gutter));
+    }
+  }
+
+  @media screen and (max-width: 1024px){
     .innovation-cards {
       grid-template-columns: 1fr;
     }
@@ -791,8 +929,14 @@ import ToastError from "../components/ToastError.astro";
       overflow: clip;
     }
     .card__image {
-      width: 80%;
-      flex: 0 0 80%;
+      width: 40%;
+      align-self: flex-end;
+    }
+  }
+
+  @media screen and (max-width: 640ox){
+    .card__image {
+      width: 60%;
       align-self: flex-end;
       transform: translateX(20%);
     }

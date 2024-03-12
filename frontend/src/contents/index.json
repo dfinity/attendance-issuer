@@ -3,6 +3,7 @@
     "title": "Early Adopter Campaign",
     "description": "Get the Early Adopter credential by connecting with Internet Identity, showcasing your status as one of the first to test advanced identity tech on the Internet Computer. Use this credential to join an exclusive OpenChat room and unlock future prizes.",
     "url": "https://early-adopter-campaign.ic0.app/",
+    "og_image": "/og-image.png",
     "type": "website"
   },
   "nav": [
@@ -15,15 +16,16 @@
       "link": "#identity-innovation"
     }
   ],
-  "githublink": "https://github.com/dfinity/early-adopter-campaign",
+  "githublink": "https://github.com/dfinity/early-adopter-issuer",
   "copyright": {
-    "text": "© 2021 DFINITY. All rights reserved.",
+    "text": "© 2024 DFINITY. All rights reserved.",
     "link": "https://dfinity.org/"
   },
 
   "iibuttontext": "Start with Internet Identity",
 
-  "mainTitle": "Become an Early Adopter",
+  "mainTitle1": "Become an",
+  "mainTitle2": "Early Adopter",
   "mainLead": "Get the Early Adopter credential by connecting with Internet Identity, showcasing your status as one of the first to test advanced identity tech on the Internet Computer. Use this credential to join an exclusive OpenChat room and unlock future prizes.",
   "mainImage": "/illu-homepage.webp",
 
@@ -82,7 +84,11 @@
   "connectionButton": "Let's go!",
 
   "confirmationTitle": "Congratulations!",
-  "confirmationTitle2": "You’ve earned the Early Adopter credential.",
+  "confirmationTitle2_1": "You’ve",
+  "confirmationTitle2_2": "earned",
+  "confirmationTitle2_3": "the Early",
+  "confirmationTitle2_4": "Adopter",
+  "confirmationTitle2_5": "credential.",
   "confirmationLead": "Use this credential to join an exclusive chatroom on Openchat.",
   "confirmationButton": "Join the OpenChat group",
   "confirmationLink": "or view credential on Internet Identity",
