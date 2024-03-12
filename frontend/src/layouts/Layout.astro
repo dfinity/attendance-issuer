@@ -393,13 +393,16 @@ import socialImage from "../assets/og-image.png";
     position: relative;
     margin-top: 0.3em;
 
-    /* display: flex; */
-    z-index: 100;
-    /* flex-direction: column; */
+    display: inline-flex;
+    flex-direction: column;
   }
 
   .title--main span {
     z-index: 2;
+  }
+
+  .lead-text {
+    margin-top: 0;
   }
 
   .title--success {
@@ -436,7 +439,7 @@ import socialImage from "../assets/og-image.png";
     left: 0;
     content: '';
     display: block;
-    width: 90%;
+    width: 100%;
     aspect-ratio: 7;
     background: url(/deco-line.webp);
     background-size: contain;
