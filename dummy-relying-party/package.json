@@ -10,7 +10,7 @@
   },
   "devDependencies": {
     "typescript": "^5.2.2",
-    "vite": "^5.1.4"
+    "vite": "^5.1.7"
   },
   "dependencies": {
     "@dfinity/auth-client": "^1.0.1",
