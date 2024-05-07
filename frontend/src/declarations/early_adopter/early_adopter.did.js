@@ -53,7 +53,7 @@ export const idlFactory = ({ IDL }) => {
   const PreparedCredentialData = IDL.Record({
     'prepared_context' : IDL.Opt(IDL.Vec(IDL.Nat8)),
   });
-  const RegisterRequest = IDL.Record({ 'event_name' : IDL.Text });
+  const RegisterRequest = IDL.Record({ 'event_name' : IDL.Opt(IDL.Text) });
   const EventData = IDL.Record({
     'joined_timestamp_s' : IDL.Nat32,
     'event_name' : IDL.Text,
@@ -62,7 +62,10 @@ export const idlFactory = ({ IDL }) => {
     'joined_timestamp_s' : IDL.Nat32,
     'events' : IDL.Vec(EventData),
   });
-  const EarlyAdopterError = IDL.Variant({ 'Internal' : IDL.Text });
+  const EarlyAdopterError = IDL.Variant({
+    'Internal' : IDL.Text,
+    'External' : IDL.Text,
+  });
   const Icrc21ConsentPreferences = IDL.Record({ 'language' : IDL.Text });
   const Icrc21VcConsentMessageRequest = IDL.Record({
     'preferences' : Icrc21ConsentPreferences,

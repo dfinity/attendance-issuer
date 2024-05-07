@@ -11,7 +11,8 @@ export interface DerivationOriginData { 'origin' : string }
 export type DerivationOriginError = { 'Internal' : string } |
   { 'UnsupportedOrigin' : string };
 export interface DerivationOriginRequest { 'frontend_hostname' : string }
-export type EarlyAdopterError = { 'Internal' : string };
+export type EarlyAdopterError = { 'Internal' : string } |
+  { 'External' : string };
 export interface EarlyAdopterResponse {
   'joined_timestamp_s' : number,
   'events' : Array<EventData>,
@@ -73,7 +74,7 @@ export interface PrepareCredentialRequest {
 export interface PreparedCredentialData {
   'prepared_context' : [] | [Uint8Array | number[]],
 }
-export interface RegisterRequest { 'event_name' : string }
+export interface RegisterRequest { 'event_name' : [] | [string] }
 export interface SignedIdAlias { 'credential_jws' : string }
 export interface _SERVICE {
   'configure' : ActorMethod<[IssuerConfig], undefined>,
