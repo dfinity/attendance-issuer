@@ -110,14 +110,27 @@ impl Default for IssuerInit {
     }
 }
 
-#[derive(CandidType, Deserialize)]
-pub struct EarlyAdopterStatus {
+#[derive(CandidType, Deserialize, Debug)]
+pub struct EventData {
     pub joined_timestamp_s: u32,
+    pub event_name: String,
+}
+
+#[derive(CandidType, Deserialize, Debug)]
+pub struct EarlyAdopterResponse {
+    pub joined_timestamp_s: u32,
+    pub events: Vec<EventData>,
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct RegisterRequest {
+    pub event_name: Option<String>,
 }
 
 #[derive(CandidType, Debug, Deserialize)]
 pub enum EarlyAdopterError {
     Internal(String),
+    External(String),
 }
 
 pub fn install_issuer(env: &StateMachine, init: &IssuerInit) -> CanisterId {
@@ -174,8 +187,16 @@ mod api {
         env: &StateMachine,
         canister_id: CanisterId,
         sender: Principal,
-    ) -> Result<Result<EarlyAdopterStatus, EarlyAdopterError>, CallError> {
-        call_candid_as(env, canister_id, sender, "register_early_adopter", ()).map(|(x,)| x)
+        request: &RegisterRequest,
+    ) -> Result<Result<EarlyAdopterResponse, EarlyAdopterError>, CallError> {
+        call_candid_as(
+            env,
+            canister_id,
+            sender,
+            "register_early_adopter",
+            (request,),
+        )
+        .map(|(x,)| x)
     }
 
     pub fn prepare_credential(
@@ -403,7 +424,8 @@ fn should_fail_get_credential_for_wrong_sender() {
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let signed_id_alias = DUMMY_SIGNED_ID_ALIAS.clone();
     let authorized_principal = Principal::from_text(DUMMY_ALIAS_ID_DAPP_PRINCIPAL).unwrap();
-    let _ = api::register_early_adopter(&env, issuer_id, authorized_principal).unwrap();
+    let request = RegisterRequest { event_name: None };
+    let _ = api::register_early_adopter(&env, issuer_id, authorized_principal, &request).unwrap();
     let unauthorized_principal = test_principal(2);
 
     let prepare_credential_response = api::prepare_credential(
@@ -504,7 +526,8 @@ fn should_prepare_early_adopter_credential_for_authorized_principal() {
     let env = env();
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let authorized_principal = Principal::from_text(DUMMY_ALIAS_ID_DAPP_PRINCIPAL).unwrap();
-    let _ = api::register_early_adopter(&env, issuer_id, authorized_principal).unwrap();
+    let request = RegisterRequest { event_name: None };
+    let _ = api::register_early_adopter(&env, issuer_id, authorized_principal, &request).unwrap();
     let response = api::prepare_credential(
         &env,
         issuer_id,
@@ -572,7 +595,8 @@ fn should_issue_credential_e2e() -> Result<(), CallError> {
     )
     .expect("Invalid ID alias");
 
-    let _ = api::register_early_adopter(&env, issuer_id, alias_tuple.id_dapp)?;
+    let request = RegisterRequest { event_name: None };
+    let _ = api::register_early_adopter(&env, issuer_id, alias_tuple.id_dapp, &request)?;
 
     let credential_spec = early_adopter_credential_spec();
     let prepared_credential = api::prepare_credential(
@@ -693,20 +717,21 @@ fn should_not_overwrite_the_first_registration() -> Result<(), CallError> {
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let user_a = principal_1();
     let user_b = principal_2();
+    let request = RegisterRequest { event_name: None };
 
     // Register two users at differen time, they should have different timestamps
-    let status_1_user_a =
-        api::register_early_adopter(&env, issuer_id, user_a)?.expect("Failed registering user a");
+    let status_1_user_a = api::register_early_adopter(&env, issuer_id, user_a, &request)?
+        .expect("Failed registering user a");
     env.advance_time(std::time::Duration::from_secs(2));
-    let status_1_user_b =
-        api::register_early_adopter(&env, issuer_id, user_b)?.expect("Failed registering user b");
+    let status_1_user_b = api::register_early_adopter(&env, issuer_id, user_b, &request)?
+        .expect("Failed registering user b");
     assert_ne!(
         status_1_user_a.joined_timestamp_s,
         status_1_user_b.joined_timestamp_s
     );
 
     // Re-register user a, it's timestamp should not change
-    let status_2_user_a = api::register_early_adopter(&env, issuer_id, user_a)?
+    let status_2_user_a = api::register_early_adopter(&env, issuer_id, user_a, &request)?
         .expect("Failed getting status for user a");
     assert_eq!(
         status_1_user_a.joined_timestamp_s,
@@ -715,7 +740,7 @@ fn should_not_overwrite_the_first_registration() -> Result<(), CallError> {
 
     // Re-register user a again, it's timestamp should still not change
     env.advance_time(std::time::Duration::from_secs(2));
-    let status_3_user_a = api::register_early_adopter(&env, issuer_id, user_a)?
+    let status_3_user_a = api::register_early_adopter(&env, issuer_id, user_a, &request)?
         .expect("Failed getting status for user a");
     assert_eq!(
         status_1_user_a.joined_timestamp_s,
@@ -723,12 +748,63 @@ fn should_not_overwrite_the_first_registration() -> Result<(), CallError> {
     );
 
     // Re-register user b, it's timestamp should not change
-    let status_2_user_b = api::register_early_adopter(&env, issuer_id, user_b)?
+    let status_2_user_b = api::register_early_adopter(&env, issuer_id, user_b, &request)?
         .expect("Failed getting status for user b");
     assert_eq!(
         status_1_user_b.joined_timestamp_s,
         status_2_user_b.joined_timestamp_s
     );
+
+    Ok(())
+}
+
+#[test]
+fn should_add_events_to_registered_user() -> Result<(), CallError> {
+    let env = env();
+    let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
+    let user = principal_1();
+    let event_data_a = RegisterRequest {
+        event_name: Some("event A".to_string()),
+    };
+    let event_data_b = RegisterRequest {
+        event_name: Some("event B".to_string()),
+    };
+
+    // Register with event_a
+    let status_1_user_a = api::register_early_adopter(&env, issuer_id, user, &event_data_a)?
+        .expect("Failed registering user a");
+    assert_eq!(status_1_user_a.events.len(), 1);
+
+    env.advance_time(std::time::Duration::from_secs(2));
+
+    // Re-register user a with event_b adds event but doesn't change timestamp
+    let status_2_user_a = api::register_early_adopter(&env, issuer_id, user, &event_data_b)?
+        .expect("Failed getting status for user a");
+    assert_eq!(
+        status_1_user_a.joined_timestamp_s,
+        status_2_user_a.joined_timestamp_s
+    );
+    assert_eq!(status_2_user_a.events.len(), 2);
+
+    Ok(())
+}
+
+#[test]
+fn should_fail_to_register_user_with_empty_event_name() -> Result<(), CallError> {
+    let env = env();
+    let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
+    let user = principal_1();
+    let empty_event = RegisterRequest {
+        event_name: Some("".to_string()),
+    };
+
+    let status_1_user =
+        api::register_early_adopter(&env, issuer_id, user, &empty_event)?.unwrap_err();
+
+    match status_1_user {
+        EarlyAdopterError::External(msg) => assert!(msg.contains("cannot be an empty string")),
+        _ => assert!(false),
+    }
 
     Ok(())
 }
@@ -757,26 +833,29 @@ fn should_upgrade_issuer() -> Result<(), CallError> {
 fn should_retain_adopters_after_upgrade() -> Result<(), CallError> {
     let env = env();
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
-    let status_before =
-        api::register_early_adopter(&env, issuer_id, principal_1())?.expect("Failed registering");
+    let request = RegisterRequest { event_name: None };
+    let status_before = api::register_early_adopter(&env, issuer_id, principal_1(), &request)?
+        .expect("Failed registering");
     let arg = candid::encode_one("()").expect("error encoding issuer init arg as candid");
     env.upgrade_canister(issuer_id, EARLY_ADOPTER_ISSUER_WASM.clone(), arg, None)?;
     env.advance_time(std::time::Duration::from_secs(2));
-    let status_for_new_user = api::register_early_adopter(&env, issuer_id, principal_2())?
-        .expect("Failed registering new user");
+    let status_for_new_user =
+        api::register_early_adopter(&env, issuer_id, principal_2(), &request)?
+            .expect("Failed registering new user");
     assert_ne!(
         status_before.joined_timestamp_s,
         status_for_new_user.joined_timestamp_s
     );
-    let status_after = api::register_early_adopter(&env, issuer_id, principal_1())?
+    let status_after = api::register_early_adopter(&env, issuer_id, principal_1(), &request)?
         .expect("Failed getting status");
     assert_eq!(
         status_before.joined_timestamp_s,
         status_after.joined_timestamp_s
     );
 
-    let status_after_repeated = api::register_early_adopter(&env, issuer_id, principal_1())?
-        .expect("Failed getting status");
+    let status_after_repeated =
+        api::register_early_adopter(&env, issuer_id, principal_1(), &request)?
+            .expect("Failed getting status");
     assert_eq!(
         status_before.joined_timestamp_s,
         status_after_repeated.joined_timestamp_s

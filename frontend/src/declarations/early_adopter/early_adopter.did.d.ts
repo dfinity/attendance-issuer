@@ -7,8 +7,20 @@ export interface CredentialSpec {
   'arguments' : [] | [Array<[string, ArgumentValue]>],
   'credential_type' : string,
 }
-export type EarlyAdopterError = { 'Internal' : string };
-export interface EarlyAdopterStatus { 'joined_timestamp_s' : number }
+export interface DerivationOriginData { 'origin' : string }
+export type DerivationOriginError = { 'Internal' : string } |
+  { 'UnsupportedOrigin' : string };
+export interface DerivationOriginRequest { 'frontend_hostname' : string }
+export type EarlyAdopterError = { 'Internal' : string } |
+  { 'External' : string };
+export interface EarlyAdopterResponse {
+  'joined_timestamp_s' : number,
+  'events' : Array<EventData>,
+}
+export interface EventData {
+  'joined_timestamp_s' : number,
+  'event_name' : string,
+}
 export interface GetCredentialRequest {
   'signed_id_alias' : SignedIdAlias,
   'prepared_context' : [] | [Uint8Array | number[]],
@@ -50,8 +62,10 @@ export type IssueCredentialError = { 'Internal' : string } |
   { 'UnsupportedCredentialSpec' : string };
 export interface IssuedCredentialData { 'vc_jws' : string }
 export interface IssuerConfig {
+  'derivation_origin' : string,
   'idp_canister_ids' : Array<Principal>,
   'ic_root_key_der' : Uint8Array | number[],
+  'frontend_hostname' : string,
 }
 export interface PrepareCredentialRequest {
   'signed_id_alias' : SignedIdAlias,
@@ -60,9 +74,15 @@ export interface PrepareCredentialRequest {
 export interface PreparedCredentialData {
   'prepared_context' : [] | [Uint8Array | number[]],
 }
+export interface RegisterRequest { 'event_name' : [] | [string] }
 export interface SignedIdAlias { 'credential_jws' : string }
 export interface _SERVICE {
   'configure' : ActorMethod<[IssuerConfig], undefined>,
+  'derivation_origin' : ActorMethod<
+    [DerivationOriginRequest],
+    { 'Ok' : DerivationOriginData } |
+      { 'Err' : DerivationOriginError }
+  >,
   'get_credential' : ActorMethod<
     [GetCredentialRequest],
     { 'Ok' : IssuedCredentialData } |
@@ -75,8 +95,8 @@ export interface _SERVICE {
       { 'Err' : IssueCredentialError }
   >,
   'register_early_adopter' : ActorMethod<
-    [],
-    { 'Ok' : EarlyAdopterStatus } |
+    [RegisterRequest],
+    { 'Ok' : EarlyAdopterResponse } |
       { 'Err' : EarlyAdopterError }
   >,
   'vc_consent_message' : ActorMethod<

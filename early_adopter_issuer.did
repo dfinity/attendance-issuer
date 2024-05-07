@@ -10,8 +10,18 @@ type CredentialSpec = record {
     arguments : opt vec record { text; ArgumentValue };
 };
 type ArgumentValue = variant { "Int" : int32; String : text };
-type EarlyAdopterStatus = record { joined_timestamp_s : nat32 };
-type EarlyAdopterError = variant { Internal : text };
+type EventData = record {
+    event_name : text;
+    joined_timestamp_s : nat32;
+};
+type EarlyAdopterResponse = record {
+    joined_timestamp_s : nat32;
+    events : vec EventData;
+};
+type EarlyAdopterError = variant {
+    Internal : text;
+    External : text;
+};
 
 /// Types for ICRC-21 consent message, cf.
 /// https://github.com/dfinity/wg-identity-authentication/blob/main/topics/icrc_21_consent_msg.md
@@ -113,6 +123,10 @@ type HttpResponse = record {
     body: blob;
 };
 
+type RegisterRequest = record {
+    event_name: opt text;
+}
+
 service: (opt IssuerConfig) -> {
     /// VC-flow API.
     vc_consent_message : (Icrc21VcConsentMessageRequest) -> (variant { Ok : Icrc21ConsentInfo; Err : Icrc21Error });
@@ -124,7 +138,7 @@ service: (opt IssuerConfig) -> {
     configure: (IssuerConfig) -> ();
 
     /// Register a user as an early adopter.
-    register_early_adopter : () ->  (variant { Ok : EarlyAdopterStatus; Err : EarlyAdopterError });
+    register_early_adopter : (RegisterRequest) ->  (variant { Ok : EarlyAdopterResponse; Err : EarlyAdopterError });
 
     /// Serve the app
     http_request: (request: HttpRequest) -> (HttpResponse) query;

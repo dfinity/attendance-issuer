@@ -13,6 +13,7 @@ use serde_bytes::ByteBuf;
 use sha2::{Digest, Sha256};
 use std::borrow::Cow;
 use std::cell::RefCell;
+use std::collections::BTreeMap;
 use vc_util::issuer_api::{
     ArgumentValue, CredentialSpec, DerivationOriginData, DerivationOriginError,
     DerivationOriginRequest, GetCredentialRequest, Icrc21ConsentInfo, Icrc21Error, Icrc21ErrorInfo,
@@ -45,9 +46,23 @@ const VC_EXPIRATION_PERIOD_NS: u64 = 15 * MINUTE_NS;
 // End of year 2024 as UNIX timestamp.
 const EOY_2024_TIMESTAMP_S: u32 = 1735685999;
 
+// Type to return event data to the client
+#[derive(CandidType, Clone, Deserialize)]
+pub struct EventData {
+    pub joined_timestamp_s: u32,
+    pub event_name: String,
+}
+
 // Internal container of per-user data.
 #[derive(CandidType, Clone, Deserialize)]
 struct EarlyAdopterData {
+    pub joined_timestamp_s: u32,
+    // BTreeMap<event_name, EventRecord>
+    pub events: BTreeMap<String, EventRecord>,
+}
+// Internal container of per-user-event data.
+#[derive(CandidType, Clone, Deserialize)]
+struct EventRecord {
     pub joined_timestamp_s: u32,
 }
 
@@ -63,13 +78,20 @@ impl Storable for EarlyAdopterData {
 
 // User-facing container of per-user data.
 #[derive(CandidType, Deserialize)]
-pub struct EarlyAdopterStatus {
+pub struct EarlyAdopterResponse {
     pub joined_timestamp_s: u32,
+    pub events: Vec<EventData>,
 }
 
 #[derive(CandidType, Deserialize)]
 pub enum EarlyAdopterError {
     Internal(String),
+    External(String),
+}
+
+#[derive(CandidType, Clone, Deserialize)]
+pub struct RegisterRequest {
+    pub event_name: Option<String>,
 }
 
 thread_local! {
@@ -421,14 +443,40 @@ fn verify_early_adopter_spec_and_get_since_year(spec: &CredentialSpec) -> Result
 
 #[update]
 #[candid_method]
-fn register_early_adopter() -> Result<EarlyAdopterStatus, EarlyAdopterError> {
+fn register_early_adopter(
+    request: RegisterRequest,
+) -> Result<EarlyAdopterResponse, EarlyAdopterError> {
     let user_id = caller();
-    let joined_timestamp_s = (time() / 1_000_000_000) as u32;
-    let new_data = EarlyAdopterData { joined_timestamp_s };
+    let now_s = (time() / 1_000_000_000) as u32;
+    // Exit early if the event_name is present by is empty.
+    if let Some(event_name) = request.clone().event_name {
+        if event_name.clone().is_empty() {
+            return Err(EarlyAdopterError::External(
+                "event_name cannot be an empty string if present".to_string(),
+            ));
+        }
+    }
     let current_data = EARLY_ADOPTERS.with_borrow_mut(|adopters| {
-        if let Some(data) = adopters.get(&user_id) {
+        if let Some(mut data) = adopters.get(&user_id) {
+            if let Some(event_name) = request.event_name {
+                let new_event = EventRecord {
+                    joined_timestamp_s: now_s,
+                };
+                data.events.insert(event_name.clone(), new_event);
+            }
             data
         } else {
+            let mut events = BTreeMap::new();
+            if let Some(event_name) = request.event_name {
+                let first_event = EventRecord {
+                    joined_timestamp_s: now_s,
+                };
+                events.insert(event_name.clone(), first_event);
+            }
+            let new_data = EarlyAdopterData {
+                joined_timestamp_s: now_s,
+                events,
+            };
             adopters.insert(user_id, new_data.clone());
             new_data
         }
@@ -438,8 +486,17 @@ fn register_early_adopter() -> Result<EarlyAdopterStatus, EarlyAdopterError> {
         user_id.to_text(),
         current_data.joined_timestamp_s
     );
-    Ok(EarlyAdopterStatus {
+    let events: Vec<EventData> = current_data
+        .events
+        .iter()
+        .map(|(event_name, data)| EventData {
+            joined_timestamp_s: data.joined_timestamp_s.clone(),
+            event_name: event_name.clone(),
+        })
+        .collect();
+    Ok(EarlyAdopterResponse {
         joined_timestamp_s: current_data.joined_timestamp_s,
+        events,
     })
 }
 

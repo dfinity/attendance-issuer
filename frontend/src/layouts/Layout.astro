@@ -97,12 +97,14 @@ import socialImage from "../assets/og-image.png";
           try {
             const identity = authClient.getIdentity();
             const agent = new HttpAgent({ identity, host });
-            const webapp = await createActor({ canisterId, agent, fetchRootKey})
-            const registerResponse = await webapp.register_early_adopter();
+            const webapp = await createActor({ canisterId, agent, fetchRootKey});
+            const registerResponse = await webapp.register_early_adopter({ event_name: ["DICE2024"] });
             if ("Ok" in registerResponse) {
               resolve({ status: 200, message: 'Logged in successfully!' });
-            } else {
+            } else if ("Err" in registerResponse && "Internal" in registerResponse.Err) {
               resolve({ status: 400, message: registerResponse.Err.Internal });
+            } else if ("Err" in registerResponse && "External" in registerResponse.Err) {
+              resolve({ status: 400, message: registerResponse.Err.External });
             }
           } catch (err: unknown) {
             resolve({ status: 400, message: `There was an error while trying to register. ${err}` });
