@@ -791,7 +791,7 @@ fn should_add_events_to_registered_user() -> Result<(), CallError> {
         status_1_user_a.joined_timestamp_s,
         status_2_user_a.joined_timestamp_s
     );
-    assert_eq!(status_1_user_a.events.len(), 2);
+    assert_eq!(status_2_user_a.events.len(), 2);
 
     Ok(())
 }
