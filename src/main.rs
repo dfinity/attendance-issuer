@@ -13,6 +13,7 @@ use serde_bytes::ByteBuf;
 use sha2::{Digest, Sha256};
 use std::borrow::Cow;
 use std::cell::RefCell;
+use std::collections::BTreeMap;
 use vc_util::issuer_api::{
     ArgumentValue, CredentialSpec, DerivationOriginData, DerivationOriginError,
     DerivationOriginRequest, GetCredentialRequest, Icrc21ConsentInfo, Icrc21Error, Icrc21ErrorInfo,
@@ -45,10 +46,19 @@ const VC_EXPIRATION_PERIOD_NS: u64 = 15 * MINUTE_NS;
 // End of year 2024 as UNIX timestamp.
 const EOY_2024_TIMESTAMP_S: u32 = 1735685999;
 
+
+// Internal container of per-user-event data.
+#[derive(CandidType, Clone, Deserialize)]
+struct EventData {
+    pub joined_timestamp_s: u32,
+    pub event_name: String,
+}
+
 // Internal container of per-user data.
 #[derive(CandidType, Clone, Deserialize)]
 struct EarlyAdopterData {
     pub joined_timestamp_s: u32,
+    pub events: BTreeMap<String, EventData>,
 }
 
 impl Storable for EarlyAdopterData {
@@ -71,6 +81,12 @@ pub struct EarlyAdopterStatus {
 pub enum EarlyAdopterError {
     Internal(String),
 }
+
+#[derive(CandidType, Deserialize)]
+pub struct RegisterRequest {
+    pub event_name: String,
+}
+
 
 thread_local! {
     /// Stable structures
@@ -421,14 +437,23 @@ fn verify_early_adopter_spec_and_get_since_year(spec: &CredentialSpec) -> Result
 
 #[update]
 #[candid_method]
-fn register_early_adopter() -> Result<EarlyAdopterStatus, EarlyAdopterError> {
+fn register_early_adopter(request: RegisterRequest) -> Result<EarlyAdopterStatus, EarlyAdopterError> {
     let user_id = caller();
-    let joined_timestamp_s = (time() / 1_000_000_000) as u32;
-    let new_data = EarlyAdopterData { joined_timestamp_s };
+    let now = (time() / 1_000_000_000) as u32;
     let current_data = EARLY_ADOPTERS.with_borrow_mut(|adopters| {
         if let Some(data) = adopters.get(&user_id) {
             data
-        } else {
+        } else  {
+            let mut events = BTreeMap::new();
+            let first_event = EventData {
+                joined_timestamp_s: now,
+                event_name: request.event_name.clone(),
+            };
+            events.insert(request.event_name.clone(), first_event);
+            let new_data = EarlyAdopterData {
+                joined_timestamp_s: now,
+                events
+            };
             adopters.insert(user_id, new_data.clone());
             new_data
         }

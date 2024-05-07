@@ -113,6 +113,10 @@ type HttpResponse = record {
     body: blob;
 };
 
+type RegisterRequest = record {
+    event_name: text;
+}
+
 service: (opt IssuerConfig) -> {
     /// VC-flow API.
     vc_consent_message : (Icrc21VcConsentMessageRequest) -> (variant { Ok : Icrc21ConsentInfo; Err : Icrc21Error });
@@ -124,7 +128,7 @@ service: (opt IssuerConfig) -> {
     configure: (IssuerConfig) -> ();
 
     /// Register a user as an early adopter.
-    register_early_adopter : () ->  (variant { Ok : EarlyAdopterStatus; Err : EarlyAdopterError });
+    register_early_adopter : (RegisterRequest) ->  (variant { Ok : EarlyAdopterStatus; Err : EarlyAdopterError });
 
     /// Serve the app
     http_request: (request: HttpRequest) -> (HttpResponse) query;
