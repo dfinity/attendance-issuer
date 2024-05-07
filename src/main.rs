@@ -47,9 +47,9 @@ const VC_EXPIRATION_PERIOD_NS: u64 = 15 * MINUTE_NS;
 const EOY_2024_TIMESTAMP_S: u32 = 1735685999;
 
 
-// Internal container of per-user-event data.
+// Container of per-user-event data. Used both to be stored and sent
 #[derive(CandidType, Clone, Deserialize)]
-struct EventData {
+pub struct EventData {
     pub joined_timestamp_s: u32,
     pub event_name: String,
 }
@@ -73,8 +73,9 @@ impl Storable for EarlyAdopterData {
 
 // User-facing container of per-user data.
 #[derive(CandidType, Deserialize)]
-pub struct EarlyAdopterStatus {
+pub struct EarlyAdopterResponse {
     pub joined_timestamp_s: u32,
+    pub events: Vec<EventData>,
 }
 
 #[derive(CandidType, Deserialize)]
@@ -437,11 +438,16 @@ fn verify_early_adopter_spec_and_get_since_year(spec: &CredentialSpec) -> Result
 
 #[update]
 #[candid_method]
-fn register_early_adopter(request: RegisterRequest) -> Result<EarlyAdopterStatus, EarlyAdopterError> {
+fn register_early_adopter(request: RegisterRequest) -> Result<EarlyAdopterResponse, EarlyAdopterError> {
     let user_id = caller();
     let now = (time() / 1_000_000_000) as u32;
     let current_data = EARLY_ADOPTERS.with_borrow_mut(|adopters| {
-        if let Some(data) = adopters.get(&user_id) {
+        if let Some(mut data) = adopters.get(&user_id) {
+            let new_event = EventData {
+                joined_timestamp_s: now,
+                event_name: request.event_name.clone(),
+            };
+            data.events.insert(request.event_name.clone(), new_event);
             data
         } else  {
             let mut events = BTreeMap::new();
@@ -463,8 +469,16 @@ fn register_early_adopter(request: RegisterRequest) -> Result<EarlyAdopterStatus
         user_id.to_text(),
         current_data.joined_timestamp_s
     );
-    Ok(EarlyAdopterStatus {
+    let events: Vec<EventData> = current_data.events
+        .iter()
+        .map(|(_, data)| EventData {
+            joined_timestamp_s: data.joined_timestamp_s.clone(),
+            event_name: data.event_name.clone(),
+        })
+        .collect();
+    Ok(EarlyAdopterResponse {
         joined_timestamp_s: current_data.joined_timestamp_s,
+        events,
     })
 }
 

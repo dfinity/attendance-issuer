@@ -111,8 +111,15 @@ impl Default for IssuerInit {
 }
 
 #[derive(CandidType, Deserialize)]
-pub struct EarlyAdopterStatus {
+pub struct EventData {
     pub joined_timestamp_s: u32,
+    pub event_name: String,
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct EarlyAdopterResponse {
+    pub joined_timestamp_s: u32,
+    pub events: Vec<EventData>,
 }
 
 #[derive(CandidType, Deserialize)]
@@ -180,7 +187,7 @@ mod api {
         canister_id: CanisterId,
         sender: Principal,
         request: &RegisterRequest,
-    ) -> Result<Result<EarlyAdopterStatus, EarlyAdopterError>, CallError> {
+    ) -> Result<Result<EarlyAdopterResponse, EarlyAdopterError>, CallError> {
         call_candid_as(env, canister_id, sender, "register_early_adopter", (request,)).map(|(x,)| x)
     }
 
@@ -738,6 +745,43 @@ fn should_not_overwrite_the_first_registration() -> Result<(), CallError> {
     assert_eq!(
         status_1_user_b.joined_timestamp_s,
         status_2_user_b.joined_timestamp_s
+    );
+
+    Ok(())
+}
+
+#[test]
+fn should_add_events_to_registered_user() -> Result<(), CallError> {
+    let env = env();
+    let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
+    let user = principal_1();
+    let event_data_a = RegisterRequest {
+        event_name: "event A".to_string(),
+    };
+    let event_data_b = RegisterRequest {
+        event_name: "event B".to_string(),
+    };
+
+    // Register with event_a
+    let status_1_user_a =
+        api::register_early_adopter(&env, issuer_id, user, &event_data_a)?.expect("Failed registering user a");
+    assert_eq!(
+        status_1_user_a.events.len(),
+        1
+    );
+
+    env.advance_time(std::time::Duration::from_secs(2));
+
+    // Re-register user a with event_b adds event but doesn't change timestamp
+    let status_2_user_a = api::register_early_adopter(&env, issuer_id, user, &event_data_b)?
+        .expect("Failed getting status for user a");
+    assert_eq!(
+        status_1_user_a.joined_timestamp_s,
+        status_2_user_a.joined_timestamp_s
+    );
+    assert_eq!(
+        status_1_user_a.events.len(),
+        2
     );
 
     Ok(())
