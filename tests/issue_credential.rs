@@ -188,7 +188,14 @@ mod api {
         sender: Principal,
         request: &RegisterRequest,
     ) -> Result<Result<EarlyAdopterResponse, EarlyAdopterError>, CallError> {
-        call_candid_as(env, canister_id, sender, "register_early_adopter", (request,)).map(|(x,)| x)
+        call_candid_as(
+            env,
+            canister_id,
+            sender,
+            "register_early_adopter",
+            (request,),
+        )
+        .map(|(x,)| x)
     }
 
     pub fn prepare_credential(
@@ -416,7 +423,9 @@ fn should_fail_get_credential_for_wrong_sender() {
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let signed_id_alias = DUMMY_SIGNED_ID_ALIAS.clone();
     let authorized_principal = Principal::from_text(DUMMY_ALIAS_ID_DAPP_PRINCIPAL).unwrap();
-    let request = RegisterRequest { event_name: "event-test".to_string() };
+    let request = RegisterRequest {
+        event_name: "event-test".to_string(),
+    };
     let _ = api::register_early_adopter(&env, issuer_id, authorized_principal, &request).unwrap();
     let unauthorized_principal = test_principal(2);
 
@@ -518,7 +527,9 @@ fn should_prepare_early_adopter_credential_for_authorized_principal() {
     let env = env();
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let authorized_principal = Principal::from_text(DUMMY_ALIAS_ID_DAPP_PRINCIPAL).unwrap();
-    let request = RegisterRequest { event_name: "event-test".to_string() };
+    let request = RegisterRequest {
+        event_name: "event-test".to_string(),
+    };
     let _ = api::register_early_adopter(&env, issuer_id, authorized_principal, &request).unwrap();
     let response = api::prepare_credential(
         &env,
@@ -587,7 +598,9 @@ fn should_issue_credential_e2e() -> Result<(), CallError> {
     )
     .expect("Invalid ID alias");
 
-    let request = RegisterRequest { event_name: "event-test".to_string() };
+    let request = RegisterRequest {
+        event_name: "event-test".to_string(),
+    };
     let _ = api::register_early_adopter(&env, issuer_id, alias_tuple.id_dapp, &request)?;
 
     let credential_spec = early_adopter_credential_spec();
@@ -709,14 +722,16 @@ fn should_not_overwrite_the_first_registration() -> Result<(), CallError> {
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let user_a = principal_1();
     let user_b = principal_2();
-    let request = RegisterRequest { event_name: "event-test".to_string() };
+    let request = RegisterRequest {
+        event_name: "event-test".to_string(),
+    };
 
     // Register two users at differen time, they should have different timestamps
-    let status_1_user_a =
-        api::register_early_adopter(&env, issuer_id, user_a, &request)?.expect("Failed registering user a");
+    let status_1_user_a = api::register_early_adopter(&env, issuer_id, user_a, &request)?
+        .expect("Failed registering user a");
     env.advance_time(std::time::Duration::from_secs(2));
-    let status_1_user_b =
-        api::register_early_adopter(&env, issuer_id, user_b, &request)?.expect("Failed registering user b");
+    let status_1_user_b = api::register_early_adopter(&env, issuer_id, user_b, &request)?
+        .expect("Failed registering user b");
     assert_ne!(
         status_1_user_a.joined_timestamp_s,
         status_1_user_b.joined_timestamp_s
@@ -763,12 +778,9 @@ fn should_add_events_to_registered_user() -> Result<(), CallError> {
     };
 
     // Register with event_a
-    let status_1_user_a =
-        api::register_early_adopter(&env, issuer_id, user, &event_data_a)?.expect("Failed registering user a");
-    assert_eq!(
-        status_1_user_a.events.len(),
-        1
-    );
+    let status_1_user_a = api::register_early_adopter(&env, issuer_id, user, &event_data_a)?
+        .expect("Failed registering user a");
+    assert_eq!(status_1_user_a.events.len(), 1);
 
     env.advance_time(std::time::Duration::from_secs(2));
 
@@ -779,10 +791,7 @@ fn should_add_events_to_registered_user() -> Result<(), CallError> {
         status_1_user_a.joined_timestamp_s,
         status_2_user_a.joined_timestamp_s
     );
-    assert_eq!(
-        status_1_user_a.events.len(),
-        2
-    );
+    assert_eq!(status_1_user_a.events.len(), 2);
 
     Ok(())
 }
@@ -811,14 +820,17 @@ fn should_upgrade_issuer() -> Result<(), CallError> {
 fn should_retain_adopters_after_upgrade() -> Result<(), CallError> {
     let env = env();
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
-    let request = RegisterRequest { event_name: "event-test".to_string() };
-    let status_before =
-        api::register_early_adopter(&env, issuer_id, principal_1(), &request)?.expect("Failed registering");
+    let request = RegisterRequest {
+        event_name: "event-test".to_string(),
+    };
+    let status_before = api::register_early_adopter(&env, issuer_id, principal_1(), &request)?
+        .expect("Failed registering");
     let arg = candid::encode_one("()").expect("error encoding issuer init arg as candid");
     env.upgrade_canister(issuer_id, EARLY_ADOPTER_ISSUER_WASM.clone(), arg, None)?;
     env.advance_time(std::time::Duration::from_secs(2));
-    let status_for_new_user = api::register_early_adopter(&env, issuer_id, principal_2(), &request)?
-        .expect("Failed registering new user");
+    let status_for_new_user =
+        api::register_early_adopter(&env, issuer_id, principal_2(), &request)?
+            .expect("Failed registering new user");
     assert_ne!(
         status_before.joined_timestamp_s,
         status_for_new_user.joined_timestamp_s
@@ -830,8 +842,9 @@ fn should_retain_adopters_after_upgrade() -> Result<(), CallError> {
         status_after.joined_timestamp_s
     );
 
-    let status_after_repeated = api::register_early_adopter(&env, issuer_id, principal_1(), &request)?
-        .expect("Failed getting status");
+    let status_after_repeated =
+        api::register_early_adopter(&env, issuer_id, principal_1(), &request)?
+            .expect("Failed getting status");
     assert_eq!(
         status_before.joined_timestamp_s,
         status_after_repeated.joined_timestamp_s

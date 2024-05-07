@@ -46,7 +46,6 @@ const VC_EXPIRATION_PERIOD_NS: u64 = 15 * MINUTE_NS;
 // End of year 2024 as UNIX timestamp.
 const EOY_2024_TIMESTAMP_S: u32 = 1735685999;
 
-
 // Container of per-user-event data. Used both to be stored and sent
 #[derive(CandidType, Clone, Deserialize)]
 pub struct EventData {
@@ -87,7 +86,6 @@ pub enum EarlyAdopterError {
 pub struct RegisterRequest {
     pub event_name: String,
 }
-
 
 thread_local! {
     /// Stable structures
@@ -438,7 +436,9 @@ fn verify_early_adopter_spec_and_get_since_year(spec: &CredentialSpec) -> Result
 
 #[update]
 #[candid_method]
-fn register_early_adopter(request: RegisterRequest) -> Result<EarlyAdopterResponse, EarlyAdopterError> {
+fn register_early_adopter(
+    request: RegisterRequest,
+) -> Result<EarlyAdopterResponse, EarlyAdopterError> {
     let user_id = caller();
     let now = (time() / 1_000_000_000) as u32;
     let current_data = EARLY_ADOPTERS.with_borrow_mut(|adopters| {
@@ -449,7 +449,7 @@ fn register_early_adopter(request: RegisterRequest) -> Result<EarlyAdopterRespon
             };
             data.events.insert(request.event_name.clone(), new_event);
             data
-        } else  {
+        } else {
             let mut events = BTreeMap::new();
             let first_event = EventData {
                 joined_timestamp_s: now,
@@ -458,7 +458,7 @@ fn register_early_adopter(request: RegisterRequest) -> Result<EarlyAdopterRespon
             events.insert(request.event_name.clone(), first_event);
             let new_data = EarlyAdopterData {
                 joined_timestamp_s: now,
-                events
+                events,
             };
             adopters.insert(user_id, new_data.clone());
             new_data
@@ -469,7 +469,8 @@ fn register_early_adopter(request: RegisterRequest) -> Result<EarlyAdopterRespon
         user_id.to_text(),
         current_data.joined_timestamp_s
     );
-    let events: Vec<EventData> = current_data.events
+    let events: Vec<EventData> = current_data
+        .events
         .iter()
         .map(|(_, data)| EventData {
             joined_timestamp_s: data.joined_timestamp_s.clone(),
