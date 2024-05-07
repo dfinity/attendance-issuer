@@ -97,8 +97,8 @@ import socialImage from "../assets/og-image.png";
           try {
             const identity = authClient.getIdentity();
             const agent = new HttpAgent({ identity, host });
-            const webapp = await createActor({ canisterId, agent, fetchRootKey})
-            const registerResponse = await webapp.register_early_adopter();
+            const webapp = await createActor({ canisterId, agent, fetchRootKey});
+            const registerResponse = await webapp.register_early_adopter({ event_name: "DICE2024" });
             if ("Ok" in registerResponse) {
               resolve({ status: 200, message: 'Logged in successfully!' });
             } else {
