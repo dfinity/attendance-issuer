@@ -18,7 +18,10 @@ type EarlyAdopterResponse = record {
     joined_timestamp_s : nat32;
     events : vec EventData;
 };
-type EarlyAdopterError = variant { Internal : text };
+type EarlyAdopterError = variant {
+    Internal : text;
+    External : text;
+};
 
 /// Types for ICRC-21 consent message, cf.
 /// https://github.com/dfinity/wg-identity-authentication/blob/main/topics/icrc_21_consent_msg.md
@@ -121,7 +124,7 @@ type HttpResponse = record {
 };
 
 type RegisterRequest = record {
-    event_name: text;
+    event_name: opt text;
 }
 
 service: (opt IssuerConfig) -> {

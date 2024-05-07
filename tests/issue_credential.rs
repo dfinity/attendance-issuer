@@ -110,13 +110,13 @@ impl Default for IssuerInit {
     }
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct EventData {
     pub joined_timestamp_s: u32,
     pub event_name: String,
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct EarlyAdopterResponse {
     pub joined_timestamp_s: u32,
     pub events: Vec<EventData>,
@@ -124,12 +124,13 @@ pub struct EarlyAdopterResponse {
 
 #[derive(CandidType, Deserialize)]
 pub struct RegisterRequest {
-    pub event_name: String,
+    pub event_name: Option<String>,
 }
 
 #[derive(CandidType, Debug, Deserialize)]
 pub enum EarlyAdopterError {
     Internal(String),
+    External(String)
 }
 
 pub fn install_issuer(env: &StateMachine, init: &IssuerInit) -> CanisterId {
@@ -424,7 +425,7 @@ fn should_fail_get_credential_for_wrong_sender() {
     let signed_id_alias = DUMMY_SIGNED_ID_ALIAS.clone();
     let authorized_principal = Principal::from_text(DUMMY_ALIAS_ID_DAPP_PRINCIPAL).unwrap();
     let request = RegisterRequest {
-        event_name: "event-test".to_string(),
+        event_name: None,
     };
     let _ = api::register_early_adopter(&env, issuer_id, authorized_principal, &request).unwrap();
     let unauthorized_principal = test_principal(2);
@@ -528,7 +529,7 @@ fn should_prepare_early_adopter_credential_for_authorized_principal() {
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let authorized_principal = Principal::from_text(DUMMY_ALIAS_ID_DAPP_PRINCIPAL).unwrap();
     let request = RegisterRequest {
-        event_name: "event-test".to_string(),
+        event_name: None,
     };
     let _ = api::register_early_adopter(&env, issuer_id, authorized_principal, &request).unwrap();
     let response = api::prepare_credential(
@@ -599,7 +600,7 @@ fn should_issue_credential_e2e() -> Result<(), CallError> {
     .expect("Invalid ID alias");
 
     let request = RegisterRequest {
-        event_name: "event-test".to_string(),
+        event_name: None,
     };
     let _ = api::register_early_adopter(&env, issuer_id, alias_tuple.id_dapp, &request)?;
 
@@ -723,7 +724,7 @@ fn should_not_overwrite_the_first_registration() -> Result<(), CallError> {
     let user_a = principal_1();
     let user_b = principal_2();
     let request = RegisterRequest {
-        event_name: "event-test".to_string(),
+        event_name: None,
     };
 
     // Register two users at differen time, they should have different timestamps
@@ -771,10 +772,10 @@ fn should_add_events_to_registered_user() -> Result<(), CallError> {
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let user = principal_1();
     let event_data_a = RegisterRequest {
-        event_name: "event A".to_string(),
+        event_name: Some("event A".to_string()),
     };
     let event_data_b = RegisterRequest {
-        event_name: "event B".to_string(),
+        event_name: Some("event B".to_string()),
     };
 
     // Register with event_a
@@ -792,6 +793,25 @@ fn should_add_events_to_registered_user() -> Result<(), CallError> {
         status_2_user_a.joined_timestamp_s
     );
     assert_eq!(status_2_user_a.events.len(), 2);
+
+    Ok(())
+}
+
+#[test]
+fn should_fail_to_register_user_with_empty_event_name() -> Result<(), CallError> {
+    let env = env();
+    let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
+    let user = principal_1();
+    let empty_event = RegisterRequest {
+        event_name: Some("".to_string()),
+    };
+
+    let status_1_user = api::register_early_adopter(&env, issuer_id, user, &empty_event)?.unwrap_err();
+
+    match status_1_user {
+        EarlyAdopterError::External(msg) => assert!(msg.contains("cannot be an empty string")),
+        _ => assert!(false)
+    }
 
     Ok(())
 }
@@ -821,7 +841,7 @@ fn should_retain_adopters_after_upgrade() -> Result<(), CallError> {
     let env = env();
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let request = RegisterRequest {
-        event_name: "event-test".to_string(),
+        event_name: None,
     };
     let status_before = api::register_early_adopter(&env, issuer_id, principal_1(), &request)?
         .expect("Failed registering");
