@@ -53,7 +53,6 @@ pub struct EventData {
     pub event_name: String,
 }
 
-
 // Internal container of per-user data.
 #[derive(CandidType, Clone, Deserialize)]
 struct EarlyAdopterData {
@@ -66,7 +65,6 @@ struct EarlyAdopterData {
 struct EventRecord {
     pub joined_timestamp_s: u32,
 }
-
 
 impl Storable for EarlyAdopterData {
     fn to_bytes(&self) -> Cow<[u8]> {
@@ -88,7 +86,7 @@ pub struct EarlyAdopterResponse {
 #[derive(CandidType, Deserialize)]
 pub enum EarlyAdopterError {
     Internal(String),
-    External(String)
+    External(String),
 }
 
 #[derive(CandidType, Clone, Deserialize)]
@@ -453,7 +451,9 @@ fn register_early_adopter(
     // Exit early if the event_name is present by is empty.
     if let Some(event_name) = request.clone().event_name {
         if event_name.clone().is_empty() {
-            return Err(EarlyAdopterError::External("event_name cannot be an empty string if present".to_string()))
+            return Err(EarlyAdopterError::External(
+                "event_name cannot be an empty string if present".to_string(),
+            ));
         }
     }
     let current_data = EARLY_ADOPTERS.with_borrow_mut(|adopters| {
