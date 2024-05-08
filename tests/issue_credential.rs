@@ -730,100 +730,52 @@ fn should_issue_credential_e2e() -> Result<(), CallError> {
     };
     let _ = api::register_early_adopter(&env, issuer_id, alias_tuple.id_dapp, &request)?;
 
-    // Get and validate EarlyAdopter credentials
-    let early_adopter_credential_spec = early_adopter_credential_spec();
-    let early_adopter_prepared_credential = api::prepare_credential(
-        &env,
-        issuer_id,
-        id_alias_credentials.issuer_id_alias_credential.id_dapp,
-        &PrepareCredentialRequest {
-            credential_spec: early_adopter_credential_spec.clone(),
-            signed_id_alias: SignedIssuerIdAlias {
-                credential_jws: id_alias_credentials
-                    .issuer_id_alias_credential
-                    .credential_jws
-                    .clone(),
+    for credential_spec in [
+        early_adopter_credential_spec(),
+        event_attendance_credential_spec(event_name.clone()),
+    ] {
+        let early_adopter_prepared_credential = api::prepare_credential(
+            &env,
+            issuer_id,
+            id_alias_credentials.issuer_id_alias_credential.id_dapp,
+            &PrepareCredentialRequest {
+                credential_spec: credential_spec.clone(),
+                signed_id_alias: SignedIssuerIdAlias {
+                    credential_jws: id_alias_credentials
+                        .issuer_id_alias_credential
+                        .credential_jws
+                        .clone(),
+                },
             },
-        },
-    )?
-    .expect("failed to prepare credential for EarlyAdopter");
+        )?
+        .expect("failed to prepare credential");
 
-    let early_adopter_get_credential_response = api::get_credential(
-        &env,
-        issuer_id,
-        id_alias_credentials.issuer_id_alias_credential.id_dapp,
-        &GetCredentialRequest {
-            credential_spec: early_adopter_credential_spec.clone(),
-            signed_id_alias: SignedIssuerIdAlias {
-                credential_jws: id_alias_credentials
-                    .issuer_id_alias_credential
-                    .credential_jws
-                    .clone(),
+        let early_adopter_get_credential_response = api::get_credential(
+            &env,
+            issuer_id,
+            id_alias_credentials.issuer_id_alias_credential.id_dapp,
+            &GetCredentialRequest {
+                credential_spec: credential_spec.clone(),
+                signed_id_alias: SignedIssuerIdAlias {
+                    credential_jws: id_alias_credentials
+                        .issuer_id_alias_credential
+                        .credential_jws
+                        .clone(),
+                },
+                prepared_context: early_adopter_prepared_credential.prepared_context,
             },
-            prepared_context: early_adopter_prepared_credential.prepared_context,
-        },
-    )?;
-    let early_adopter_claims = verify_credential_jws_with_canister_id(
-        &early_adopter_get_credential_response.unwrap().vc_jws,
-        &issuer_id,
-        &root_pk_raw,
-        env.time().duration_since(UNIX_EPOCH).unwrap().as_nanos(),
-    )
-    .expect("credential verification failed for EarlyAdopter");
-    let early_adopter_vc_claims = early_adopter_claims
-        .vc()
-        .expect("missing VC claims for EarlyAdopter");
-    validate_claims_match_spec(early_adopter_vc_claims, &early_adopter_credential_spec)
-        .expect("Claim validation failed for EarlyAdopter");
-
-    // Get and validate EventAttendance credentials
-    let event_attendance_credential_spec = event_attendance_credential_spec(event_name.clone());
-    let event_attendance_prepared_credential = api::prepare_credential(
-        &env,
-        issuer_id,
-        id_alias_credentials.issuer_id_alias_credential.id_dapp,
-        &PrepareCredentialRequest {
-            credential_spec: event_attendance_credential_spec.clone(),
-            signed_id_alias: SignedIssuerIdAlias {
-                credential_jws: id_alias_credentials
-                    .issuer_id_alias_credential
-                    .credential_jws
-                    .clone(),
-            },
-        },
-    )?
-    .expect("failed to prepare credential for EventAttendance");
-
-    let event_attendance_get_credential_response = api::get_credential(
-        &env,
-        issuer_id,
-        id_alias_credentials.issuer_id_alias_credential.id_dapp,
-        &GetCredentialRequest {
-            credential_spec: event_attendance_credential_spec.clone(),
-            signed_id_alias: SignedIssuerIdAlias {
-                credential_jws: id_alias_credentials
-                    .issuer_id_alias_credential
-                    .credential_jws
-                    .clone(),
-            },
-            prepared_context: event_attendance_prepared_credential.prepared_context,
-        },
-    )?;
-    let event_attendance_claims = verify_credential_jws_with_canister_id(
-        &event_attendance_get_credential_response.unwrap().vc_jws,
-        &issuer_id,
-        &root_pk_raw,
-        env.time().duration_since(UNIX_EPOCH).unwrap().as_nanos(),
-    )
-    .expect("credential verification failed for EventAttendance");
-    let event_attendance_vc_claims = event_attendance_claims
-        .vc()
-        .expect("missing VC claims for EventAttendance");
-    validate_claims_match_spec(
-        event_attendance_vc_claims,
-        &event_attendance_credential_spec,
-    )
-    .expect("Claim validation failed for EventAttendance");
+        )?;
+        let early_adopter_claims = verify_credential_jws_with_canister_id(
+            &early_adopter_get_credential_response.unwrap().vc_jws,
+            &issuer_id,
+            &root_pk_raw,
+            env.time().duration_since(UNIX_EPOCH).unwrap().as_nanos(),
+        )
+        .expect("credential verification failed");
+        let early_adopter_vc_claims = early_adopter_claims.vc().expect("missing VC claims");
+        validate_claims_match_spec(early_adopter_vc_claims, &credential_spec)
+            .expect("Claim validation failed");
+    }
 
     Ok(())
 }

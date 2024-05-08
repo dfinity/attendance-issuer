@@ -389,8 +389,8 @@ pub fn get_vc_consent_message_en(
             consent_message: format!("You have attended the event {}.", event_name),
             language: "en".to_string(),
         }),
-        Err(_) => Err(Icrc21Error::ConsentMessageUnavailable(Icrc21ErrorInfo {
-            description: "Credential spec not supported".to_string(),
+        Err(err) => Err(Icrc21Error::ConsentMessageUnavailable(Icrc21ErrorInfo {
+            description: format!("Credential spec not supported: {:?}", err),
         })),
     }
 }
@@ -697,7 +697,11 @@ fn verify_principal_event_attendance(
                 user.to_text(),
                 event_name
             );
-            Err(IssueCredentialError::UnauthorizedSubject(user.to_text()))
+            Err(IssueCredentialError::UnauthorizedSubject(format!(
+                "User {} has not attended event {}",
+                user.to_text(),
+                event_name
+            )))
         }
         Some(_) => Ok(()),
     }
