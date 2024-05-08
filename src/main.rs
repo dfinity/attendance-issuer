@@ -382,11 +382,11 @@ pub fn get_vc_consent_message_en(
 ) -> Result<Icrc21ConsentInfo, Icrc21Error> {
     match verify_credential_spec(credential_spec) {
         Ok(SupportedCredentialType::EarlyAdopter(since_year)) => Ok(Icrc21ConsentInfo {
-            consent_message: format!("User is an early adopter since {}.", since_year),
+            consent_message: format!("You are an early adopter since {}.", since_year),
             language: "en".to_string(),
         }),
         Ok(SupportedCredentialType::EventAttendance(event_name)) => Ok(Icrc21ConsentInfo {
-            consent_message: format!("User has attended the event {}.", event_name),
+            consent_message: format!("You have attended the event {}.", event_name),
             language: "en".to_string(),
         }),
         Err(_) => Err(Icrc21Error::ConsentMessageUnavailable(Icrc21ErrorInfo {
