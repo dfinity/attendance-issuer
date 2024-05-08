@@ -233,7 +233,7 @@ mod api {
 }
 
 #[test]
-fn should_get_vc_consent_message() {
+fn should_get_vc_consent_message_for_eary_adopter() {
     let env = env();
     let canister_id = install_canister(&env, EARLY_ADOPTER_ISSUER_WASM.clone());
 
@@ -250,7 +250,29 @@ fn should_get_vc_consent_message() {
             .expect("Failed to obtain consent info");
     assert!(consent_info
         .consent_message
-        .contains("Verifiable Credentials Early Adopter"));
+        .contains("User is an early adopter"));
+}
+
+#[test]
+fn should_get_vc_consent_message_for_event_attendance() {
+    let env = env();
+    let canister_id = install_canister(&env, EARLY_ADOPTER_ISSUER_WASM.clone());
+
+    let event_name = "DICE2024".to_string();
+    let consent_message_request = Icrc21VcConsentMessageRequest {
+        credential_spec: event_attendance_credential_spec(event_name),
+        preferences: Icrc21ConsentPreferences {
+            language: "en-US".to_string(),
+        },
+    };
+
+    let consent_info =
+        api::vc_consent_message(&env, canister_id, principal_1(), &consent_message_request)
+            .expect("API call failed")
+            .expect("Failed to obtain consent info");
+    assert!(consent_info
+        .consent_message
+        .contains("User has attended the event"));
 }
 
 #[test]
@@ -275,13 +297,13 @@ fn should_fail_vc_consent_message_if_not_supported() {
 }
 
 #[test]
-fn should_fail_vc_consent_message_if_missing_arguments() {
+fn should_fail_early_adopter_vc_consent_message_if_missing_arguments() {
     let env = env();
     let canister_id = install_canister(&env, EARLY_ADOPTER_ISSUER_WASM.clone());
 
     let consent_message_request = Icrc21VcConsentMessageRequest {
         credential_spec: CredentialSpec {
-            credential_type: "VerifiedEmployee".to_string(),
+            credential_type: "EarlyAdopter".to_string(),
             arguments: None,
         },
         preferences: Icrc21ConsentPreferences {
@@ -296,7 +318,28 @@ fn should_fail_vc_consent_message_if_missing_arguments() {
 }
 
 #[test]
-fn should_fail_vc_consent_message_if_missing_required_argument() {
+fn should_fail_event_attendance_vc_consent_message_if_missing_arguments() {
+    let env = env();
+    let canister_id = install_canister(&env, EARLY_ADOPTER_ISSUER_WASM.clone());
+
+    let consent_message_request = Icrc21VcConsentMessageRequest {
+        credential_spec: CredentialSpec {
+            credential_type: "EventAttendance".to_string(),
+            arguments: None,
+        },
+        preferences: Icrc21ConsentPreferences {
+            language: "en-US".to_string(),
+        },
+    };
+
+    let response =
+        api::vc_consent_message(&env, canister_id, principal_1(), &consent_message_request)
+            .expect("API call failed");
+    assert_matches!(response, Err(Icrc21Error::ConsentMessageUnavailable(_)));
+}
+
+#[test]
+fn should_fail_early_adopter_vc_consent_message_if_missing_required_argument() {
     let env = env();
     let canister_id = install_canister(&env, EARLY_ADOPTER_ISSUER_WASM.clone());
 
@@ -305,8 +348,32 @@ fn should_fail_vc_consent_message_if_missing_required_argument() {
 
     let consent_message_request = Icrc21VcConsentMessageRequest {
         credential_spec: CredentialSpec {
-            credential_type: "VerifiedEmployee".to_string(),
-            arguments: None,
+            credential_type: "EarlyAdopter".to_string(),
+            arguments: Some(args),
+        },
+        preferences: Icrc21ConsentPreferences {
+            language: "en-US".to_string(),
+        },
+    };
+
+    let response =
+        api::vc_consent_message(&env, canister_id, principal_1(), &consent_message_request)
+            .expect("API call failed");
+    assert_matches!(response, Err(Icrc21Error::ConsentMessageUnavailable(_)));
+}
+
+#[test]
+fn should_fail_event_attendance_vc_consent_message_if_missing_required_argument() {
+    let env = env();
+    let canister_id = install_canister(&env, EARLY_ADOPTER_ISSUER_WASM.clone());
+
+    let mut args = HashMap::new();
+    args.insert("wrongArgument".to_string(), ArgumentValue::Int(42));
+
+    let consent_message_request = Icrc21VcConsentMessageRequest {
+        credential_spec: CredentialSpec {
+            credential_type: "EventAttendance".to_string(),
+            arguments: Some(args),
         },
         preferences: Icrc21ConsentPreferences {
             language: "en-US".to_string(),
@@ -376,6 +443,15 @@ fn early_adopter_credential_spec() -> CredentialSpec {
     args.insert("sinceYear".to_string(), ArgumentValue::Int(2024));
     CredentialSpec {
         credential_type: "EarlyAdopter".to_string(),
+        arguments: Some(args),
+    }
+}
+
+fn event_attendance_credential_spec(event_name: String) -> CredentialSpec {
+    let mut args = HashMap::new();
+    args.insert("eventName".to_string(), ArgumentValue::String(event_name));
+    CredentialSpec {
+        credential_type: "EventAttendance".to_string(),
         arguments: Some(args),
     }
 }
@@ -541,6 +617,59 @@ fn should_prepare_early_adopter_credential_for_authorized_principal() {
     assert_matches!(response, Ok(_));
 }
 
+#[test]
+fn should_fail_to_prepare_event_attendance_credential_for_non_attendees() {
+    let env = env();
+    let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
+    let authorized_principal = Principal::from_text(DUMMY_ALIAS_ID_DAPP_PRINCIPAL).unwrap();
+    let attended_event = "DICE2024".to_string();
+    let not_attended_event = "Denver2025".to_string();
+    let request = RegisterRequest {
+        event_name: Some(attended_event.clone()),
+    };
+    let status_user = api::register_early_adopter(&env, issuer_id, authorized_principal, &request)
+        .unwrap()
+        .unwrap();
+    assert_eq!(status_user.events.len(), 1);
+    let response = api::prepare_credential(
+        &env,
+        issuer_id,
+        authorized_principal,
+        &PrepareCredentialRequest {
+            credential_spec: event_attendance_credential_spec(not_attended_event.clone()),
+            signed_id_alias: DUMMY_SIGNED_ID_ALIAS.clone(),
+        },
+    )
+    .expect("API call failed");
+    assert_matches!(response, Err(IssueCredentialError::UnauthorizedSubject(_)));
+}
+
+#[test]
+fn should_prepare_event_attendance_credential_for_attendees() {
+    let env = env();
+    let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
+    let authorized_principal = Principal::from_text(DUMMY_ALIAS_ID_DAPP_PRINCIPAL).unwrap();
+    let event_name = "DICE2024".to_string();
+    let request = RegisterRequest {
+        event_name: Some(event_name.clone()),
+    };
+    let status_user = api::register_early_adopter(&env, issuer_id, authorized_principal, &request)
+        .unwrap()
+        .unwrap();
+    assert_eq!(status_user.events.len(), 1);
+    let response = api::prepare_credential(
+        &env,
+        issuer_id,
+        authorized_principal,
+        &PrepareCredentialRequest {
+            credential_spec: event_attendance_credential_spec(event_name.clone()),
+            signed_id_alias: DUMMY_SIGNED_ID_ALIAS.clone(),
+        },
+    )
+    .expect("API call failed");
+    assert_matches!(response, Ok(_));
+}
+
 /// Verifies that different credentials are being created including II interactions.
 #[test]
 fn should_issue_credential_e2e() -> Result<(), CallError> {
@@ -595,16 +724,20 @@ fn should_issue_credential_e2e() -> Result<(), CallError> {
     )
     .expect("Invalid ID alias");
 
-    let request = RegisterRequest { event_name: None };
+    let event_name = "DICE2024".to_string();
+    let request = RegisterRequest {
+        event_name: Some(event_name.clone()),
+    };
     let _ = api::register_early_adopter(&env, issuer_id, alias_tuple.id_dapp, &request)?;
 
-    let credential_spec = early_adopter_credential_spec();
-    let prepared_credential = api::prepare_credential(
+    // Get and validate EarlyAdopter credentials
+    let early_adopter_credential_spec = early_adopter_credential_spec();
+    let early_adopter_prepared_credential = api::prepare_credential(
         &env,
         issuer_id,
         id_alias_credentials.issuer_id_alias_credential.id_dapp,
         &PrepareCredentialRequest {
-            credential_spec: credential_spec.clone(),
+            credential_spec: early_adopter_credential_spec.clone(),
             signed_id_alias: SignedIssuerIdAlias {
                 credential_jws: id_alias_credentials
                     .issuer_id_alias_credential
@@ -613,32 +746,84 @@ fn should_issue_credential_e2e() -> Result<(), CallError> {
             },
         },
     )?
-    .expect("failed to prepare credential");
+    .expect("failed to prepare credential for EarlyAdopter");
 
-    let get_credential_response = api::get_credential(
+    let early_adopter_get_credential_response = api::get_credential(
         &env,
         issuer_id,
         id_alias_credentials.issuer_id_alias_credential.id_dapp,
         &GetCredentialRequest {
-            credential_spec: credential_spec.clone(),
+            credential_spec: early_adopter_credential_spec.clone(),
             signed_id_alias: SignedIssuerIdAlias {
                 credential_jws: id_alias_credentials
                     .issuer_id_alias_credential
                     .credential_jws
                     .clone(),
             },
-            prepared_context: prepared_credential.prepared_context,
+            prepared_context: early_adopter_prepared_credential.prepared_context,
         },
     )?;
-    let claims = verify_credential_jws_with_canister_id(
-        &get_credential_response.unwrap().vc_jws,
+    let early_adopter_claims = verify_credential_jws_with_canister_id(
+        &early_adopter_get_credential_response.unwrap().vc_jws,
         &issuer_id,
         &root_pk_raw,
         env.time().duration_since(UNIX_EPOCH).unwrap().as_nanos(),
     )
-    .expect("credential verification failed");
-    let vc_claims = claims.vc().expect("missing VC claims");
-    validate_claims_match_spec(vc_claims, &credential_spec).expect("Clam validation failed");
+    .expect("credential verification failed for EarlyAdopter");
+    let early_adopter_vc_claims = early_adopter_claims
+        .vc()
+        .expect("missing VC claims for EarlyAdopter");
+    validate_claims_match_spec(early_adopter_vc_claims, &early_adopter_credential_spec)
+        .expect("Claim validation failed for EarlyAdopter");
+
+    // Get and validate EventAttendance credentials
+    let event_attendance_credential_spec = event_attendance_credential_spec(event_name.clone());
+    let event_attendance_prepared_credential = api::prepare_credential(
+        &env,
+        issuer_id,
+        id_alias_credentials.issuer_id_alias_credential.id_dapp,
+        &PrepareCredentialRequest {
+            credential_spec: event_attendance_credential_spec.clone(),
+            signed_id_alias: SignedIssuerIdAlias {
+                credential_jws: id_alias_credentials
+                    .issuer_id_alias_credential
+                    .credential_jws
+                    .clone(),
+            },
+        },
+    )?
+    .expect("failed to prepare credential for EventAttendance");
+
+    let event_attendance_get_credential_response = api::get_credential(
+        &env,
+        issuer_id,
+        id_alias_credentials.issuer_id_alias_credential.id_dapp,
+        &GetCredentialRequest {
+            credential_spec: event_attendance_credential_spec.clone(),
+            signed_id_alias: SignedIssuerIdAlias {
+                credential_jws: id_alias_credentials
+                    .issuer_id_alias_credential
+                    .credential_jws
+                    .clone(),
+            },
+            prepared_context: event_attendance_prepared_credential.prepared_context,
+        },
+    )?;
+    let event_attendance_claims = verify_credential_jws_with_canister_id(
+        &event_attendance_get_credential_response.unwrap().vc_jws,
+        &issuer_id,
+        &root_pk_raw,
+        env.time().duration_since(UNIX_EPOCH).unwrap().as_nanos(),
+    )
+    .expect("credential verification failed for EventAttendance");
+    let event_attendance_vc_claims = event_attendance_claims
+        .vc()
+        .expect("missing VC claims for EventAttendance");
+    validate_claims_match_spec(
+        event_attendance_vc_claims,
+        &event_attendance_credential_spec,
+    )
+    .expect("Claim validation failed for EventAttendance");
 
     Ok(())
 }

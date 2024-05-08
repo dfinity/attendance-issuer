@@ -299,10 +299,8 @@ fn get_credential(req: GetCredentialRequest) -> Result<IssuedCredentialData, Iss
     if let Err(err) = authorize_vc_request(&req.signed_id_alias, &caller(), time().into()) {
         return Result::<IssuedCredentialData, IssueCredentialError>::Err(err);
     };
-    if let Err(err) = verify_early_adopter_spec_and_get_since_year(&req.credential_spec) {
-        return Result::<IssuedCredentialData, IssueCredentialError>::Err(
-            IssueCredentialError::UnsupportedCredentialSpec(err),
-        );
+    if let Err(err) = verify_credential_spec(&req.credential_spec) {
+        return Result::<IssuedCredentialData, IssueCredentialError>::Err(err);
     }
     let prepared_context = match req.prepared_context {
         Some(context) => context,
@@ -379,21 +377,21 @@ fn get_derivation_origin(hostname: &str) -> Result<DerivationOriginData, Derivat
     })
 }
 
-const EARLY_ADOPTER_VC_CONSENT_EN: &str = r###"# Verifiable Credentials Early Adopter
-
-Credential stating that you are an Early Adopter of VC-tech since at least"###;
-
 pub fn get_vc_consent_message_en(
     credential_spec: &CredentialSpec,
 ) -> Result<Icrc21ConsentInfo, Icrc21Error> {
-    match verify_early_adopter_spec_and_get_since_year(credential_spec) {
-        Err(err) => Err(Icrc21Error::ConsentMessageUnavailable(Icrc21ErrorInfo {
-            description: err,
-        })),
-        Ok(since_year) => Ok(Icrc21ConsentInfo {
-            consent_message: format!("{} {}.", EARLY_ADOPTER_VC_CONSENT_EN, since_year),
+    match verify_credential_spec(credential_spec) {
+        Ok(SupportedCredentialType::EarlyAdopter(since_year)) => Ok(Icrc21ConsentInfo {
+            consent_message: format!("User is an early adopter since {}.", since_year),
             language: "en".to_string(),
         }),
+        Ok(SupportedCredentialType::EventAttendance(event_name)) => Ok(Icrc21ConsentInfo {
+            consent_message: format!("User has attended the event {}.", event_name),
+            language: "en".to_string(),
+        }),
+        Err(_) => Err(Icrc21Error::ConsentMessageUnavailable(Icrc21ErrorInfo {
+            description: "Credential spec not supported".to_string(),
+        })),
     }
 }
 
@@ -433,6 +431,36 @@ fn verify_early_adopter_spec_and_get_since_year(spec: &CredentialSpec) -> Result
         };
 
         Ok(*year)
+    } else {
+        Err(format!(
+            "Credential {} is not supported",
+            spec.credential_type.as_str()
+        ))
+    }
+}
+
+fn verify_event_attendance_and_get_event_name(spec: &CredentialSpec) -> Result<&String, String> {
+    if spec.credential_type.as_str() == "EventAttendance" {
+        let Some(arguments) = &spec.arguments else {
+            return Err("Credential spec has no arguments".to_string());
+        };
+        let expected_argument = "eventName";
+        let Some(value) = arguments.get(expected_argument) else {
+            return Err(format!(
+                "Credential spec has no {}-argument",
+                expected_argument
+            ));
+        };
+        if arguments.len() != 1 {
+            return Err("Credential spec has unexpected arguments".to_string());
+        }
+        let ArgumentValue::String(event_name) = value else {
+            return Err(format!(
+                "Credential spec has unexpected value for {}-argument",
+                expected_argument
+            ));
+        };
+        Ok(event_name)
     } else {
         Err(format!(
             "Credential {} is not supported",
@@ -536,10 +564,7 @@ fn static_headers() -> Vec<(String, String)> {
 
 fn main() {}
 
-fn verified_early_adopter_credential(
-    subject_principal: Principal,
-    credential_spec: &CredentialSpec,
-) -> String {
+fn verified_credential(subject_principal: Principal, credential_spec: &CredentialSpec) -> String {
     let params = CredentialParams {
         spec: credential_spec.clone(),
         subject_id: did_for_principal(subject_principal),
@@ -566,20 +591,59 @@ fn credential_id_for_principal(subject_principal: Principal) -> String {
     )
 }
 
+#[derive(Debug)]
+pub enum SupportedCredentialType {
+    // Early adopter since <year>
+    EarlyAdopter(i32),
+    // Attendace to specific event
+    EventAttendance(String),
+}
+
+fn verify_credential_spec(
+    spec: &CredentialSpec,
+) -> Result<SupportedCredentialType, IssueCredentialError> {
+    match spec.credential_type.as_str() {
+        "EarlyAdopter" => {
+            let since_year = verify_early_adopter_spec_and_get_since_year(spec)
+                .map_err(IssueCredentialError::UnsupportedCredentialSpec)?;
+            Ok(SupportedCredentialType::EarlyAdopter(since_year))
+        }
+        "EventAttendance" => {
+            let event_name = verify_event_attendance_and_get_event_name(spec)
+                .map_err(IssueCredentialError::UnsupportedCredentialSpec)?;
+            Ok(SupportedCredentialType::EventAttendance(event_name.clone()))
+        }
+        other => Err(IssueCredentialError::UnsupportedCredentialSpec(format!(
+            "Credential {} is not supported",
+            other
+        ))),
+    }
+}
+
 fn prepare_credential_jwt(
     credential_spec: &CredentialSpec,
     alias_tuple: &AliasTuple,
 ) -> Result<String, IssueCredentialError> {
-    let since_year = verify_early_adopter_spec_and_get_since_year(credential_spec)
-        .map_err(IssueCredentialError::UnsupportedCredentialSpec)?;
-    let max_timestamp_s = year_to_max_timestamp_s(since_year);
-    EARLY_ADOPTERS.with_borrow(|adopters| {
-        verify_principal_registered_and_authorized(alias_tuple.id_dapp, adopters, max_timestamp_s)
-    })?;
-    Ok(verified_early_adopter_credential(
-        alias_tuple.id_alias,
-        credential_spec,
-    ))
+    match verify_credential_spec(credential_spec) {
+        Ok(SupportedCredentialType::EarlyAdopter(since_year)) => {
+            let max_timestamp_s = year_to_max_timestamp_s(since_year);
+            EARLY_ADOPTERS.with_borrow(|adopters| {
+                verify_principal_registered_and_authorized(
+                    alias_tuple.id_dapp,
+                    adopters,
+                    max_timestamp_s,
+                )
+            })?;
+            Ok(verified_credential(alias_tuple.id_alias, credential_spec))
+        }
+        Ok(SupportedCredentialType::EventAttendance(event_name)) => {
+            EARLY_ADOPTERS.with_borrow(|adopters| {
+                verify_principal_event_attendance(alias_tuple.id_dapp, adopters, event_name)
+            })?;
+            Ok(verified_credential(alias_tuple.id_alias, credential_spec))
+        }
+        Err(err) => Err(err),
+    }
 }
 
 fn verify_principal_registered_and_authorized(
@@ -608,6 +672,34 @@ fn verify_principal_registered_and_authorized(
             "unauthorized principal {}",
             user.to_text()
         )))
+    }
+}
+
+fn verify_principal_event_attendance(
+    user: Principal,
+    adopters: &EarlyAdoptersMap,
+    event_name: String,
+) -> Result<(), IssueCredentialError> {
+    let Some(ea_data) = adopters.get(&user) else {
+        println!(
+            "*** principal {} it is not registered for early adopter credential",
+            user.to_text(),
+        );
+        return Err(IssueCredentialError::UnauthorizedSubject(format!(
+            "unregistered principal {}",
+            user.to_text()
+        )));
+    };
+    match ea_data.events.get(&event_name) {
+        None => {
+            println!(
+                "*** principal {} has not attended the event {}",
+                user.to_text(),
+                event_name
+            );
+            Err(IssueCredentialError::UnauthorizedSubject(user.to_text()))
+        }
+        Some(_) => Ok(()),
     }
 }
 
