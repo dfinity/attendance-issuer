@@ -71,9 +71,20 @@ done
 
 DFX_NETWORK="${DFX_NETWORK:-local}"
 II_CANISTER_ID="${II_CANISTER_ID:-$(dfx canister id internet_identity)}"
-ISSUER_CANISTER="${ISSUER_CANISTER:-issuer}"
+ISSUER_CANISTER="${ISSUER_CANISTER:-early_adopter}"
+ISSUER_CANISTER_ID=$(dfx canister id "$ISSUER_CANISTER")
 
 echo "Using DFX network: $DFX_NETWORK" >&2
+
+if [ "$DFX_NETWORK" = "local" ]; then
+  REPLICA_SERVER_PORT=$(dfx info webserver-port)
+  ISSUER_DERIVATION_ORIGIN="http://localhost:4321"
+  ISSUER_FRONTEND_HOSTNAME="http://localhost:4321"
+fi
+if [ "$DFX_NETWORK" = "mainnet" ]; then
+  ISSUER_DERIVATION_ORIGIN="https://${ISSUER_CANISTER_ID}.icp0.io"
+  ISSUER_FRONTEND_HOSTNAME="https://${ISSUER_CANISTER_ID}.icp0.io"
+fi
 
 # At the time of writing dfx outputs incorrect JSON with dfx ping (commas between object
 # entries are missing).
@@ -90,4 +101,4 @@ echo "Parsed rootkey: ${rootkey_did:0:20}..." >&2
 
 echo "Using II canister: $II_CANISTER_ID" >&2
 
-dfx canister call --network "$DFX_NETWORK" "$ISSUER_CANISTER" configure '(record { idp_canister_ids = vec{ principal "'"$II_CANISTER_ID"'" }; ic_root_key_der = vec '"$rootkey_did"' })'
+dfx canister call --network "$DFX_NETWORK" "$ISSUER_CANISTER" configure '(record { idp_canister_ids = vec { principal "'"$II_CANISTER_ID"'" }; ic_root_key_der = vec '"$rootkey_did"';  derivation_origin = "'"$ISSUER_DERIVATION_ORIGIN"'"; frontend_hostname = "'"$ISSUER_FRONTEND_HOSTNAME"'"; })'

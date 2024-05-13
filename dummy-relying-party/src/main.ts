@@ -1,11 +1,14 @@
 import { AuthClient } from "@dfinity/auth-client";
 import { decodeJwt } from "jose";
+import { requestVerifiablePresentation, type VerifiablePresentationResponse } from "@dfinity/verifiable-credentials/request-verifiable-presentation";
 
 const II_URL = import.meta.env.VITE_INTERNET_IDENTITY_URL;
 const ISSUER_ORIGIN = import.meta.env.VITE_ISSUER_ORIGIN;
 const ISSUER_CANISTER_ID = import.meta.env.VITE_ISSUER_CANISTER_ID;
 const loginButton = document.getElementById("login");
-const vcButton = document.getElementById("start-vc");
+const vcContainer = document.getElementById("vc-container");
+const earlyAdopterVCButton = document.getElementById("start-early-adopter-vc");
+const attendeeVCForm = document.getElementById("request-attendee-credential") as HTMLFormElement || null;
 const loginStatus = document.getElementById("login-status");
 const authClient = await AuthClient.create();
 loginButton?.addEventListener("click", async () => {
@@ -13,7 +16,7 @@ loginButton?.addEventListener("click", async () => {
     identityProvider: II_URL,
     onSuccess: () => {
       loginButton?.classList.add("hidden");
-      vcButton?.classList.remove("hidden");
+      vcContainer?.classList.remove("hidden");
       if (loginStatus) {
         loginStatus.innerText = `Logged in as ${authClient.getIdentity().getPrincipal().toText()}`;
       }
@@ -21,60 +24,56 @@ loginButton?.addEventListener("click", async () => {
   });
 });
 
-let iiWindow: Window | null = null;
-const handleFlowFinished = (evnt: MessageEvent) => {
-  try {
-    // Make the presentation presentable
-    const verifiablePresentation = evnt.data?.result?.verifiablePresentation;
-    if (verifiablePresentation === undefined) {
-      return console.error("No verifiable presentation found");
-    }
+earlyAdopterVCButton?.addEventListener("click", async () => {
+  requestCredentials("EarlyAdopter", { sinceYear: 2024 });
+});
 
-    const ver = decodeJwt(verifiablePresentation) as any;
-    const creds = ver.vp.verifiableCredential;
-    const [alias, credential] = creds.map((cred: string) =>
-      JSON.stringify(decodeJwt(cred), null, 2)
-    );
-    const resultElement = document.getElementById("vc-result");
-    if (resultElement) {
-      resultElement.innerText = `Alias: ${alias}\nCredential: ${credential}`;
-    }
-  } finally {
-    iiWindow?.close();
-    window.removeEventListener("message", handleFlowFinished);
-  }
-}
-const handleFlowReady = (evnt: MessageEvent) => {
-  if (evnt.data?.method !== "vc-flow-ready") {
-    return;
-  }
+attendeeVCForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const formData = new FormData(attendeeVCForm);
+  const eventName = formData.get("event-name") as string;
+  requestCredentials("EventAttendance", { eventName });
+});
+
+const requestCredentials = async (credentialType: string, credentialArgs: Record<string, string | number>) => {
   const identity = authClient.getIdentity();
   const principal = identity.getPrincipal().toText();
-  const req = {
-    id:"1",
-    jsonrpc: "2.0",
-    method: "request_credential",
-    params: {
-      issuer: {
-        origin: ISSUER_ORIGIN,
-        canisterId: ISSUER_CANISTER_ID,
-      },
-      credentialSpec: {
-        credentialType: "EarlyAdopter",
-        arguments: {
-          sinceYear: 2024
+  requestVerifiablePresentation({
+    onSuccess: async (verifiablePresentation: VerifiablePresentationResponse) => {
+      const resultElement = document.getElementById("vc-result");
+      if ("Ok" in verifiablePresentation) {
+        const ver = decodeJwt(verifiablePresentation.Ok) as any;
+        const creds = ver.vp.verifiableCredential;
+        const [alias, credential] = creds.map((cred: string) =>
+          JSON.stringify(decodeJwt(cred), null, 2)
+        );
+        if (resultElement) {
+          resultElement.innerText = `Alias: ${alias}\nCredential: ${credential}`;
         }
+      } else {
+        if (resultElement) {
+          resultElement.innerText = "Credential not obtained";
+        }
+      }
+    },
+    onError() {
+      const resultElement = document.getElementById("vc-result");
+      if (resultElement) {
+        resultElement.innerText = "There was an error obtaining the credential.";
+      }
+    },
+    issuerData: {
+      origin: ISSUER_ORIGIN,
+      canisterId: ISSUER_CANISTER_ID,
+    },
+    credentialData: {
+      credentialSpec: {
+        credentialType,
+        arguments: credentialArgs,
       },
       credentialSubject: principal,
     },
-  };
-  window.addEventListener("message", handleFlowFinished);
-  window.removeEventListener("message", handleFlowReady);
-  evnt.source?.postMessage(req, { targetOrigin: evnt.origin });
-};
-vcButton?.addEventListener("click", async () => {
-  window.addEventListener("message", handleFlowReady);
-  const url = new URL(II_URL);
-  url.pathname = "vc-flow/";
-  iiWindow = window.open(url, "_blank");
-});
+    identityProvider: II_URL,
+    derivationOrigin: undefined,
+  });
+}
