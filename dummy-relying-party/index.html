@@ -10,8 +10,14 @@
     <div>
       <button id="login">Login</button>
       <p id="login-status">Not logged in</p>
-      <button class="hidden" id="start-vc">Check Credential</button>
-      <p id="vc-result"></p>
+      <div id="vc-container" class="hidden">
+        <button id="start-early-adopter-vc">Check Early Adopter Credential</button>
+        <form id="request-attendee-credential">
+          <input type="text" id="event-name" name="event-name" placeholder="Enter the event name to get the credential" />
+          <button type="submit">Request Attendee Credential</button>
+        </form>
+      </div>
+      <pre id="vc-result"></pre>
     </div>
     <style>
       .hidden {
