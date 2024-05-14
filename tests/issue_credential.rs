@@ -250,7 +250,7 @@ fn should_get_vc_consent_message_for_eary_adopter() {
             .expect("Failed to obtain consent info");
     assert!(consent_info
         .consent_message
-        .contains("You are an early adopter"));
+        .contains("You became an early adopter"));
 }
 
 #[test]
