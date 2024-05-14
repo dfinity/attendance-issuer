@@ -202,6 +202,7 @@ import socialImage from "../assets/og-image.png";
     --vc-eggplant: #1c0b5a;
     --vc-grape: #542eea;
     --vc-mika: #8c45f0;
+    --vc-mika-transparent: rgba(243, 245, 246, 0.2);
     --vc-rosewater: #ede8fa;
     --vc-chrome: #e5e5e5;
     --vc-light-grey: #d4d8e5;
@@ -385,7 +386,7 @@ import socialImage from "../assets/og-image.png";
   }
 
   .title {
-    font-size: var(--rst-title--subsection);
+    font-size: var(--rst-title--section);
     font-weight: 600;
     margin-bottom: .5em;
     margin-top: 0;
@@ -491,7 +492,7 @@ import socialImage from "../assets/og-image.png";
   }
 
   .button--oc {
-    margin-bottom: var(--rs-stack-button);
+    margin: 0;
   }
 
   .button--oc::after {
@@ -806,8 +807,9 @@ import socialImage from "../assets/og-image.png";
     margin-bottom: var(--rs-gutter);
     text-align: left;
 
-    display: flex;
-    gap: calc(8 * var(--rs-gutter));
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: calc(4 * var(--rs-gutter));
   }
 
   .card--split {
@@ -852,6 +854,7 @@ import socialImage from "../assets/og-image.png";
     flex: 2;
     
     /* To align contents of card__cta and card__message we add an extra margin here */
+    /* 41px represent the header on top */
     padding-top: calc(var(--rs-gutter) + 41px);
     
     background: var(--rc-cardBackground--highlight);
@@ -864,7 +867,7 @@ import socialImage from "../assets/og-image.png";
   .card__cta__content {
     display: flex;
     flex-direction: column;
-    align-items: start;
+    align-items: stretch;
     justify-content: start;
     padding: 0 10%;
   }
@@ -874,6 +877,27 @@ import socialImage from "../assets/og-image.png";
     height: auto;
     transform: translate(0);
     align-self: center;
+  }
+
+  .credential-card {
+    background: var(--vc-mika-transparent);
+    border-radius: var(--rs-border-radius);
+    border: 1px solid var(--vc-snow);
+    padding: calc(var(--rs-gutter) * 1.5);
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--rs-gutter);
+  }
+
+  .credential-card__label {
+    margin: 0;
+    font-weight: 300;
+  }
+
+  .credential-card__title {
+    margin: 0;
+    font-size: var(--rst-title--subsection);
   }
 
   @media screen and (max-width: 1024px){
@@ -891,10 +915,9 @@ import socialImage from "../assets/og-image.png";
   @media screen and (max-width: 640px){
     .card--split {
       flex-direction: column;
-      gap: var(--rs-gutter);
     }
     .card__cta {
-      padding: calc(var(--rs-gutter) * 4) 10%;
+      padding: calc(var(--rs-gutter) * 2) 10%;
     }
   }
 
@@ -912,17 +935,13 @@ import socialImage from "../assets/og-image.png";
     height: auto;
   }
 
-  .card .card__image {
-    width: 60%;
-  }
-
   .card.card--innovation {
     padding-top: var(--rs-gutter--large);
   }
 
   @media screen and (max-width: 1300px) {
     .card--intro {
-      gap: calc(4 * var(--rs-gutter));
+      gap: calc(2 * var(--rs-gutter));
     }
   }
 
@@ -931,6 +950,7 @@ import socialImage from "../assets/og-image.png";
       grid-template-columns: 1fr;
     }
     .card--intro {
+      display: flex;
       flex-direction: column-reverse;
       gap: var(--rs-gutter);
       overflow: clip;
