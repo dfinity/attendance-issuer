@@ -7,7 +7,7 @@ set -euo pipefail
 #########
 
 function title() {
-    echo "Provisioning issuer canister" >&2
+    echo "Deploying issuer canister" >&2
 }
 
 function usage() {
@@ -19,7 +19,7 @@ Usage:
 Options:
   --ii-canister-id CANISTER_ID  The canister ID to use as IDP, defaults to the local internet_identity canister
   --dfx-network NETWORK         The network to use (typically "local" or "ic"), defaults to "local"
-  --issuer-canister CANISTER    The canister to configure (name or canister ID), defaults to "issuer"
+  --issuer-canister-id CANISTER The canister ID to deploy, gets it from "dfx canister id early_adopter" if not provided"
 EOF
 }
 
@@ -54,7 +54,7 @@ do
             shift;
             ;;
         --issuer-canister)
-            ISSUER_CANISTER="${2:?missing value for '--issuer-canister'}"
+            ISSUER_CANISTER_ID="${2:?missing value for '--issuer-canister-id'}"
             shift; # shift past --issuer-canister & value
             shift;
             ;;
@@ -70,10 +70,7 @@ done
 
 DFX_NETWORK="${DFX_NETWORK:-local}"
 II_CANISTER_ID="${II_CANISTER_ID:-$(dfx canister id internet_identity --network "$DFX_NETWORK")}"
-ISSUER_CANISTER="${ISSUER_CANISTER:-early_adopter}"
 ISSUER_CANISTER_ID="${ISSUER_CANISTER_ID:-$(dfx canister id early_adopter --network "$DFX_NETWORK")}"
-
-echo "Using DFX network: $DFX_NETWORK" >&2
 if [ "$DFX_NETWORK" = "local" ]; then
   REPLICA_SERVER_PORT=$(dfx info webserver-port)
   ISSUER_DERIVATION_ORIGIN="http://${ISSUER_CANISTER_ID}.localhost:${REPLICA_SERVER_PORT}"
@@ -88,6 +85,12 @@ if [ "$DFX_NETWORK" = "ic_test" ]; then
   ISSUER_DERIVATION_ORIGIN="https://${ISSUER_CANISTER_ID}.icp0.io"
   ISSUER_FRONTEND_HOSTNAME="https://${ISSUER_CANISTER_ID}.icp0.io"
 fi
+
+echo "Using DFX network: $DFX_NETWORK" >&2
+echo "Using II canister: $II_CANISTER_ID" >&2
+echo "Using issuer canister: $ISSUER_CANISTER_ID" >&2
+echo "Using derivation origin: $ISSUER_DERIVATION_ORIGIN" >&2
+echo "Using frontend hostname: $ISSUER_FRONTEND_HOSTNAME" >&2
 
 # At the time of writing dfx outputs incorrect JSON with dfx ping (commas between object
 # entries are missing).
@@ -104,4 +107,4 @@ echo "Parsed rootkey: ${rootkey_did:0:20}..." >&2
 
 echo "Using II canister: $II_CANISTER_ID" >&2
 
-dfx canister call --network "$DFX_NETWORK" "$ISSUER_CANISTER" configure '(record { idp_canister_ids = vec { principal "'"$II_CANISTER_ID"'" }; ic_root_key_der = vec '"$rootkey_did"';  derivation_origin = "'"$ISSUER_DERIVATION_ORIGIN"'"; frontend_hostname = "'"$ISSUER_FRONTEND_HOSTNAME"'"; })'
+dfx deploy early_adopter --network "$DFX_NETWORK" --argument '(opt record { idp_canister_ids = vec{ principal "'"$II_CANISTER_ID"'" }; ic_root_key_der = vec '"$rootkey_did"'; derivation_origin = "'"$ISSUER_DERIVATION_ORIGIN"'"; frontend_hostname = "'"$ISSUER_FRONTEND_HOSTNAME"'"; })'
