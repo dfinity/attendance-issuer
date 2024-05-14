@@ -3,7 +3,7 @@ import { signInWithNewUser } from './utils';
 
 test("use registers with Internet Identity and is redirected to a success page", async ({ page, context }) => {
   await page.goto('/');
-  await expect(page).toHaveTitle(/Early Adopter Campaign/);
+  await expect(page).toHaveTitle(/Proof of Attendance Campaign/);
 
   await signInWithNewUser({ page, context });
   

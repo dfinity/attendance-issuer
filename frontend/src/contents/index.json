@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "Early Adopter Campaign",
-    "description": "Get the Early Adopter credential by connecting with Internet Identity, showcasing your status as one of the first to test advanced identity tech on the Internet Computer. Use this credential to join an exclusive OpenChat room and unlock future prizes.",
+    "title": "Proof of Attendance Campaign",
+    "description": "Connect with Internet Identity to earn a proof of attendance credential for DICE 2024. Use this credential to join an exclusive OpenChat group and connect with fellow conference attendees.",
     "url": "https://early-adopter-campaign.ic0.app/",
     "og_image": "/og-image.png",
     "type": "website"
@@ -24,23 +24,24 @@
 
   "iibuttontext": "Start with Internet Identity",
 
-  "mainTitle1": "Become an",
-  "mainTitle2": "Early Adopter",
-  "mainLead": "Get the Early Adopter credential by connecting with Internet Identity, showcasing your status as one of the first to test advanced identity tech on the Internet Computer. Use this credential to join an exclusive OpenChat room and unlock future prizes.",
+  "mainTitle1": "Earn a Proof",
+  "mainTitle2": "of Attendance",
+  "mainTitle3": "Credential",
+  "mainLead": "Connect with Internet Identity to earn a proof of attendance credential for DICE 2024. Use this credential to join an exclusive OpenChat group and connect with fellow conference attendees.",
   "mainImage": "/illu-homepage.webp",
 
   "howtoChip": "How it Works",
   "howtoTitle": "Use a verifiable credential to access an exclusive OpenChat group",
-  "howtoLead": "The Early Adopter campaign empowers you to test out Internet Identity’s newest feature: verifiable credentials. Whether you’re a developer, user, or digital identity enthusiast, earn an Early Adopter credential, and hold a piece of history on the Internet Computer.",
+  "howtoLead": "Whether you’re a developer, end-user, or digital identity enthusiast, earn a proof of attendance credential, and join an exclusive group on OpenChat, a chat application running end-to-end on the Internet Computer blockchain.",
 
   "howtoSteps": [
     {
       "title": "Sign up with Internet Identity",
-      "body": "Click “Let’s go!” and sign up for the Early Adopter campaign with Internet Identity."
+      "body": "Click “Let’s go!” and sign up for your Proof of Attendance credential with Internet Identity."
     },
     {
       "title": "Get your credential",
-      "body": "By signing up, the Early Adopter credential will be issued to your Internet Identity."
+      "body": "By signing up, a Proof of Attendance credential will be issued to your Internet Identity."
     },
     {
       "title": "Join an exclusive chat on Openchat",
@@ -78,10 +79,6 @@
       "type": "highlighted"
     }
   ],
-
-  "connectionTitle": "Become an Early Adopter",
-  "connectionLead": "Connect with Internet Identity to instantly earn the Early Adopter credential, a piece of data that proves you are one of the first people to try groundbreaking identity technology on the Internet Computer. Using your Early Adopter credential, you can access an exclusive chatroom on OpenChat and earn future prizes.",
-  "connectionButton": "Let's go!",
 
   "confirmationTitle": "Congratulations!",
   "confirmationTitle2_1": "You’ve",
