@@ -81,15 +81,15 @@
   ],
 
   "confirmationTitle": "Congratulations!",
-  "confirmationTitle2_1": "You’ve",
-  "confirmationTitle2_2": "earned",
-  "confirmationTitle2_3": "the Early",
-  "confirmationTitle2_4": "Adopter",
-  "confirmationTitle2_5": "credential.",
+  "confirmationTitle2_1": "You’ve earned",
+  "confirmationTitle2_2": "a verifiable",
+  "confirmationTitle2_3": "credential!",
   "confirmationLead": "Use this credential to join an exclusive chatroom on Openchat.",
-  "confirmationButton": "Join the OpenChat group",
-  "confirmationLink": "or view credential on Internet Identity",
   "confirmationImg": "/illu-success.webp",
+
+  "credentiaCardLabel": "Credential",
+  "credentialTitleDICE": "DICE Proof of Attendance",
+  "credentialCardButton": "Join the OpenChat group",
 
   "returningTitle": "You’ve been here before!",
   "returningTitle2": "It looks like you’ve earned the Early Adopter credential.",
