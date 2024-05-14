@@ -8,6 +8,7 @@ cd "$EARLY_ADOPTER_ISSUER_DIR"
 
 # Build the frontend
 cd frontend/
+./scripts/create-env-vars.sh
 npm ci
 npm run build 
 cd ../
