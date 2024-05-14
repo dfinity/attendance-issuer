@@ -28,6 +28,13 @@ if [ "$DFX_NETWORK" = "local" ]; then
   echo "PUBLIC_HOST=${HOST}" >> $ENV_FILE
   echo "PUBLIC_FETCH_ROOT_KEY=true" >> $ENV_FILE
 fi
+if [ "$DFX_NETWORK" = "ic_test" ]; then
+  II_URL="https://${II_CANISTER_ID}.ic0.app"
+  HOST="https://icp-api.io"
+  echo "PUBLIC_INTERNET_IDENTITY_URL=${II_URL}" > $ENV_FILE
+  echo "PUBLIC_HOST=${HOST}" >> $ENV_FILE
+  echo "PUBLIC_FETCH_ROOT_KEY=false" >> $ENV_FILE
+fi
 if [ "$DFX_NETWORK" = "mainnet" ]; then
   II_URL="https://${II_CANISTER_ID}.ic0.app"
   HOST="https://icp-api.io"
