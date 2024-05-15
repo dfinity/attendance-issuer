@@ -1,5 +1,6 @@
-# early-adopter-issuer
-An implementation of a VC issuer for "VerifiedEarlyAdopter" credentials.
+# Prof Of Attendace Issuer
+
+An implementation of a Verified Credentials issuer for "EventAttendance" credentials.
 
 ## Building
 
