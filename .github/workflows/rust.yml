@@ -49,6 +49,12 @@ jobs:
         gzip -d ic-test-state-machine.gz
         chmod +x ic-test-state-machine
 
+    - name: Create canistres
+      # We need the canisters to be able to build the wasm
+      run: |
+        dfx canister create internet_identity
+        dfx canister create early_adopter
+
     - name: Build canister
       run: ./build.sh
 
