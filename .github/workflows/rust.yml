@@ -45,7 +45,7 @@ jobs:
 
     - name: Install ic-test-machine
       run: |
-        curl -sLO https://download.dfinity.systems/ic/08b0e064eef80a4dc8aa523c02852a29ec968604/binaries/x86_64-darwin/ic-test-state-machine.gz
+        curl -sLO https://download.dfinity.systems/ic/08b0e064eef80a4dc8aa523c02852a29ec968604/binaries/x86_64-linux/ic-test-state-machine.gz
         gzip -d ic-test-state-machine.gz
         chmod +x ic-test-state-machine
 
@@ -70,5 +70,8 @@ jobs:
         export STATE_MACHINE_BINARY="$(pwd)/ic-test-state-machine"
         export II_WASM="$(pwd)/internet_identity_dev.wasm.gz"
         cargo test
+    
+    - name: Stop local replica
+      run: dfx stop
     
 
