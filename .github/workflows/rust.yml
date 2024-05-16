@@ -18,6 +18,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20
 
     - name: Install Rust
       run: |
@@ -33,4 +36,17 @@ jobs:
       # https://users.rust-lang.org/t/check-if-the-cargo-lock-is-up-to-date-without-building-anything/91048/5
     - name: Cargo Lockfile Check
       run: cargo update --workspace --locked
+
+    - name: Install ic-test-machine
+      run: |
+        curl -sLO https://download.dfinity.systems/ic/08b0e064eef80a4dc8aa523c02852a29ec968604/binaries/x86_64-darwin/ic-test-state-machine.gz
+        gzip -d ic-test-state-machine.gz
+        chmod +x ic-test-state-machine
+
+    - name: Build canister
+      run: ./build.sh
+
+    - name: Test
+      run: cargo test
+    
 
