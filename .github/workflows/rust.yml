@@ -22,6 +22,12 @@ jobs:
       with:
         node-version: 20
 
+    - name: Install dfx
+      uses: dfinity/setup-dfx@main
+
+    - name: Install ic-wasm
+      run: cargo install ic-wasm --version 0.3.5
+
     - name: Install Rust
       run: |
         rustup update ${{ matrix.rust }} --no-self-update
