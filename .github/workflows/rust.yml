@@ -59,16 +59,12 @@ jobs:
         dfx canister create early_adopter
         dfx canister create internet_identity
 
-    - name: Download Internet Identity
-      run: dfx build internet_identity
-
     - name: Build canister
       run: ./build.sh
 
     - name: Test
       run: |
         export STATE_MACHINE_BINARY="$(pwd)/ic-test-state-machine"
-        export II_WASM="$(pwd)/internet_identity_dev.wasm.gz"
         cargo test
     
     - name: Stop local replica
