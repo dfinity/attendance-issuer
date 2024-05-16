@@ -48,7 +48,6 @@ jobs:
         curl -sLO https://download.dfinity.systems/ic/08b0e064eef80a4dc8aa523c02852a29ec968604/binaries/x86_64-darwin/ic-test-state-machine.gz
         gzip -d ic-test-state-machine.gz
         chmod +x ic-test-state-machine
-        export STATE_MACHINE_BINARY="$(pwd)/ic-test-state-machine"
 
     - name: Start local replica
       # We need to start the replica to create canisters.
@@ -63,6 +62,8 @@ jobs:
       run: ./build.sh
 
     - name: Test
-      run: cargo test
+      run: |
+        export STATE_MACHINE_BINARY="$(pwd)/ic-test-state-machine"
+        cargo test
     
 
