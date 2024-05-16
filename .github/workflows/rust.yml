@@ -49,7 +49,7 @@ jobs:
         gzip -d ic-test-state-machine.gz
         chmod +x ic-test-state-machine
         pwd
-        export STATE_MACHINE_BINARY="./ic-test-state-machine"
+        export STATE_MACHINE_BINARY="../ic-test-state-machine"
 
     - name: Start local replica
       # We need to start the replica to create canisters.
