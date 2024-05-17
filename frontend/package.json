@@ -14,7 +14,7 @@
     "lint:prettier": "prettier --check .",
     "lint:fix": "npm run prettier:fix && npm run eslint:fix",
     "prettier:fix": "prettier --write .",
-    "postinstall": "node -e \"require('fs').cpSync('node_modules/@junobuild/analytics/dist/workers/', './public/workers', {recursive: true});\"",
+    "postinstall": "node -e \"require('fs').cpSync('node_modules/@junobuild/analytics/dist/workers/analytics.worker.js', './public/workers/analytics.worker.js', {recursive: true});\"",
     "eslint:fix": "eslint --fix"
   },
   "dependencies": {
