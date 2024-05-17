@@ -23,6 +23,7 @@ use lazy_static::lazy_static;
 use serde_bytes::ByteBuf;
 use std::collections::HashMap;
 use std::path::PathBuf;
+use std::str;
 use std::time::{Duration, UNIX_EPOCH};
 use vc_util::issuer_api::{
     ArgumentValue, CredentialSpec, DerivationOriginData, DerivationOriginError,
@@ -843,6 +844,39 @@ fn issuer_canister_serves_http_assets() -> Result<(), CallError> {
             certification_version,
         );
         assert_eq!(result.verification_version, certification_version);
+    }
+
+    Ok(())
+}
+
+/// Verifies that the expected assets is delivered and certified.
+#[test]
+fn issuer_canister_serves_metrics_endpoint() -> Result<(), CallError> {
+    let env = env();
+    let canister_id = install_canister(&env, EARLY_ADOPTER_ISSUER_WASM.clone());
+    let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
+    let request = RegisterRequest { event_name: None };
+
+    api::register_early_adopter(&env, issuer_id, principal_1(), &request)?
+        .expect("Failed registering");
+
+    let request = HttpRequest {
+        method: "GET".to_string(),
+        url: "/metrics".to_string(),
+        headers: vec![],
+        body: ByteBuf::new(),
+        certificate_version: Some(1),
+    };
+    let http_response = http_request(&env, canister_id, &request)?;
+    assert_eq!(http_response.status_code, 200);
+
+    match str::from_utf8(&http_response.body) {
+        Ok(metrics_str) => {
+            assert!(metrics_str.contains("early_adopters 1"));
+        }
+        Err(_) => {
+            assert!(false)
+        }
     }
 
     Ok(())
