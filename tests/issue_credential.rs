@@ -881,16 +881,24 @@ fn issuer_canister_serves_metrics_endpoint() -> Result<(), CallError> {
     }
 
     let env = env();
-    let canister_id = install_canister(&env, EARLY_ADOPTER_ISSUER_WASM.clone());
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let request = RegisterRequest { event_name: None };
 
-    assert_metrics(&env, canister_id, "early_adopters 0")?;
+    assert_metrics(&env, issuer_id, "early_adopters 0")?;
 
     api::register_early_adopter(&env, issuer_id, principal_1(), &request)?
-        .expect("Failed registering");
+        .expect("Failed registering user");
 
-    assert_metrics(&env, canister_id, "early_adopters 1")?;
+    assert_metrics(&env, issuer_id, "early_adopters 1")?;
+
+    env.advance_time(std::time::Duration::from_secs(2));
+
+    api::register_early_adopter(&env, issuer_id, principal_2(), &request)?
+        .expect("Failed registering user");
+
+    env.advance_time(std::time::Duration::from_secs(2));
+
+    assert_metrics(&env, issuer_id, "early_adopters 2")?;
 
     Ok(())
 }
