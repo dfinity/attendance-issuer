@@ -14,11 +14,13 @@
     "lint:prettier": "prettier --check .",
     "lint:fix": "npm run prettier:fix && npm run eslint:fix",
     "prettier:fix": "prettier --write .",
+    "postinstall": "node -e \"require('fs').cpSync('node_modules/@junobuild/analytics/dist/workers/', './public/workers', {recursive: true});\"",
     "eslint:fix": "eslint --fix"
   },
   "dependencies": {
     "@astrojs/check": "^0.5.4",
     "@dfinity/auth-client": "^1.0.1",
+    "@junobuild/analytics": "^0.0.22",
     "astro": "^4.4.0",
     "typescript": "^5.3.3"
   },

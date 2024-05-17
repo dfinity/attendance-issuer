@@ -53,6 +53,7 @@ import socialImage from "../assets/og-image.png";
 <script>
   import { AuthClient } from "@dfinity/auth-client";
   import { HttpAgent } from "@dfinity/agent";
+  import { initOrbiter } from "@junobuild/analytics";
   import { createActor } from "../utils/actor";
 
   const AUTH_POPUP_WIDTH = 576;
@@ -168,6 +169,31 @@ import socialImage from "../assets/og-image.png";
     toastElement.classList.remove("hide");
     setTimeout(hideErrorToast, 5000);
   };
+
+  /**
+   * Initialize Juno Analytics only for production, and only if the required environment variables are set; otherwise, ignore.
+   */
+   const initAnalytics = async () => {
+    const isDev = import.meta.env.DEV;
+    
+    if (isDev) {
+      return;
+    }
+    
+    const SATELLITE_ID = import.meta.env.PUBLIC_JUNO_SATELLITE_ID;
+    const ORBITER_ID = import.meta.env.PUBLIC_JUNO_ORBITER_ID;
+
+    if (SATELLITE_ID === undefined || ORBITER_ID === undefined) {
+      return;
+    }
+    
+    await initOrbiter({
+      orbiterId: ORBITER_ID,
+      satelliteId: SATELLITE_ID,
+    });
+  }
+  
+  document.addEventListener("DOMContentLoaded", initAnalytics, {once: true});
 </script>
 
 <style is:global>
