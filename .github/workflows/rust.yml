@@ -57,7 +57,6 @@ jobs:
       run: |
         dfx canister create internet_identity
         dfx canister create early_adopter
-        dfx canister create internet_identity
 
     - name: Download Internet Identity
       # We need the II for the issuer integratoin tests.
