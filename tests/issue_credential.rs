@@ -23,6 +23,7 @@ use lazy_static::lazy_static;
 use serde_bytes::ByteBuf;
 use std::collections::HashMap;
 use std::path::PathBuf;
+use std::str;
 use std::time::{Duration, UNIX_EPOCH};
 use vc_util::issuer_api::{
     ArgumentValue, CredentialSpec, DerivationOriginData, DerivationOriginError,
@@ -844,6 +845,60 @@ fn issuer_canister_serves_http_assets() -> Result<(), CallError> {
         );
         assert_eq!(result.verification_version, certification_version);
     }
+
+    Ok(())
+}
+
+/// Verifies that the expected assets is delivered and certified.
+#[test]
+fn issuer_canister_serves_metrics_endpoint() -> Result<(), CallError> {
+    fn assert_metrics(
+        env: &StateMachine,
+        canister_id: Principal,
+        expected_substring: &str,
+    ) -> Result<(), CallError> {
+        let request = HttpRequest {
+            method: "GET".to_string(),
+            url: "/metrics".to_string(),
+            headers: vec![],
+            body: ByteBuf::new(),
+            certificate_version: Some(1),
+        };
+        let http_response = http_request(&env, canister_id, &request)?;
+        assert_eq!(http_response.status_code, 200);
+
+        match str::from_utf8(&http_response.body) {
+            Ok(metrics_str) => {
+                print!("{}", metrics_str.to_string());
+                assert!(metrics_str.contains(expected_substring));
+            }
+            Err(_) => {
+                assert!(false);
+            }
+        };
+
+        Ok(())
+    }
+
+    let env = env();
+    let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
+    let request = RegisterRequest { event_name: None };
+
+    assert_metrics(&env, issuer_id, "early_adopters 0")?;
+
+    api::register_early_adopter(&env, issuer_id, principal_1(), &request)?
+        .expect("Failed registering user");
+
+    assert_metrics(&env, issuer_id, "early_adopters 1")?;
+
+    env.advance_time(std::time::Duration::from_secs(2));
+
+    api::register_early_adopter(&env, issuer_id, principal_2(), &request)?
+        .expect("Failed registering user");
+
+    env.advance_time(std::time::Duration::from_secs(2));
+
+    assert_metrics(&env, issuer_id, "early_adopters 2")?;
 
     Ok(())
 }
