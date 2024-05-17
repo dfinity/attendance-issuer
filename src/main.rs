@@ -4,6 +4,7 @@ use canister_sig_util::{extract_raw_root_pk_from_der, CanisterSigPublicKey, IC_R
 use ic_cdk::api::{caller, set_certified_data, time};
 use ic_cdk_macros::{init, query, update};
 use ic_certification::{fork_hash, labeled_hash, pruned, Hash};
+use ic_metrics_encoder::MetricsEncoder;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::storable::{Bound, Storable};
 use ic_stable_structures::{DefaultMemoryImpl, RestrictedMemory, StableBTreeMap, StableCell};
@@ -528,33 +529,72 @@ fn register_early_adopter(
     })
 }
 
+fn metrics() -> Result<Vec<u8>, std::io::Error> {
+    let early_adopters_count = EARLY_ADOPTERS.with_borrow(|adopters| adopters.len());
+    let mut writer = MetricsEncoder::new(vec![], time() as i64 / 1_000_000);
+    writer.encode_gauge(
+        "early_adopters",
+        early_adopters_count as f64,
+        "Number of registered users",
+    )?;
+    Ok(writer.into_inner())
+}
+
 #[query]
 #[candid_method(query)]
 pub fn http_request(req: HttpRequest) -> HttpResponse {
-    // TODO: add `/metrics`-endpoint
     let parts: Vec<&str> = req.url.split('?').collect();
     let path = parts[0];
-    let sigs_root_hash =
-        SIGNATURES.with_borrow(|sigs| pruned(labeled_hash(LABEL_SIG, &sigs.root_hash())));
-    let maybe_asset = ASSETS.with_borrow(|assets| {
-        assets.get_certified_asset(path, req.certificate_version, Some(sigs_root_hash))
-    });
+    match path {
+        "/metrics" => match metrics() {
+            Ok(body) => {
+                let headers = vec![
+                    (
+                        "Content-Type".to_string(),
+                        "text/plain; version=0.0.4".to_string(),
+                    ),
+                    ("Content-Length".to_string(), body.len().to_string()),
+                ];
+                HttpResponse {
+                    status_code: 200,
+                    headers,
+                    body: ByteBuf::from(body),
+                }
+            }
+            Err(err) => HttpResponse {
+                status_code: 500,
+                headers: vec![],
+                body: ByteBuf::from(format!("Failed to encode metrics: {err}")),
+            },
+        },
+        probably_an_asset => {
+            let sigs_root_hash =
+                SIGNATURES.with_borrow(|sigs| pruned(labeled_hash(LABEL_SIG, &sigs.root_hash())));
+            let maybe_asset = ASSETS.with_borrow(|assets| {
+                assets.get_certified_asset(
+                    probably_an_asset,
+                    req.certificate_version,
+                    Some(sigs_root_hash),
+                )
+            });
 
-    let mut headers = static_headers();
-    match maybe_asset {
-        Some(asset) => {
-            headers.extend(asset.headers);
-            HttpResponse {
-                status_code: 200,
-                body: ByteBuf::from(asset.content),
-                headers,
+            let mut headers = static_headers();
+            match maybe_asset {
+                Some(asset) => {
+                    headers.extend(asset.headers);
+                    HttpResponse {
+                        status_code: 200,
+                        body: ByteBuf::from(asset.content),
+                        headers,
+                    }
+                }
+                None => HttpResponse {
+                    status_code: 404,
+                    headers,
+                    body: ByteBuf::from(format!("Asset {} not found.", path)),
+                },
             }
         }
-        None => HttpResponse {
-            status_code: 404,
-            headers,
-            body: ByteBuf::from(format!("Asset {} not found.", path)),
-        },
     }
 }
 

@@ -858,6 +858,7 @@ dependencies = [
  "ic-cdk-macros",
  "ic-certification 2.5.0",
  "ic-http-certification",
+ "ic-metrics-encoder",
  "ic-response-verification",
  "ic-stable-structures 0.6.4",
  "ic-test-state-machine-client",
@@ -1696,6 +1697,12 @@ dependencies = [
  "strum",
  "strum_macros",
 ]
+
+[[package]]
+name = "ic-metrics-encoder"
+version = "1.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8b5c7628eac357aecda461130f8074468be5aa4d258a002032d82d817f79f1f8"
 
 [[package]]
 name = "ic-protobuf"
