@@ -173,7 +173,7 @@ import socialImage from "../assets/og-image.png";
   /**
    * Initialize Juno Analytics only for production, and only if the required environment variables are set; otherwise, ignore.
    */
-   const initAnalytics = async () => {
+  const initAnalytics = async () => {
     const isDev = import.meta.env.DEV;
     
     if (isDev) {
@@ -192,8 +192,8 @@ import socialImage from "../assets/og-image.png";
       satelliteId: SATELLITE_ID,
     });
   }
-  
-  document.addEventListener("DOMContentLoaded", initAnalytics, {once: true});
+
+  initAnalytics();
 </script>
 
 <style is:global>
