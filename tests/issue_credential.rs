@@ -852,32 +852,45 @@ fn issuer_canister_serves_http_assets() -> Result<(), CallError> {
 /// Verifies that the expected assets is delivered and certified.
 #[test]
 fn issuer_canister_serves_metrics_endpoint() -> Result<(), CallError> {
+    fn assert_metrics(
+        env: &StateMachine,
+        canister_id: Principal,
+        expected_substring: &str,
+    ) -> Result<(), CallError> {
+        let request = HttpRequest {
+            method: "GET".to_string(),
+            url: "/metrics".to_string(),
+            headers: vec![],
+            body: ByteBuf::new(),
+            certificate_version: Some(1),
+        };
+        let http_response = http_request(&env, canister_id, &request)?;
+        assert_eq!(http_response.status_code, 200);
+
+        match str::from_utf8(&http_response.body) {
+            Ok(metrics_str) => {
+                print!("{}", metrics_str.to_string());
+                assert!(metrics_str.contains(expected_substring));
+            }
+            Err(_) => {
+                assert!(false);
+            }
+        };
+
+        Ok(())
+    }
+
     let env = env();
     let canister_id = install_canister(&env, EARLY_ADOPTER_ISSUER_WASM.clone());
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let request = RegisterRequest { event_name: None };
 
+    assert_metrics(&env, canister_id, "early_adopters 0")?;
+
     api::register_early_adopter(&env, issuer_id, principal_1(), &request)?
         .expect("Failed registering");
 
-    let request = HttpRequest {
-        method: "GET".to_string(),
-        url: "/metrics".to_string(),
-        headers: vec![],
-        body: ByteBuf::new(),
-        certificate_version: Some(1),
-    };
-    let http_response = http_request(&env, canister_id, &request)?;
-    assert_eq!(http_response.status_code, 200);
-
-    match str::from_utf8(&http_response.body) {
-        Ok(metrics_str) => {
-            assert!(metrics_str.contains("early_adopters 1"));
-        }
-        Err(_) => {
-            assert!(false)
-        }
-    }
+    assert_metrics(&env, canister_id, "early_adopters 1")?;
 
     Ok(())
 }
