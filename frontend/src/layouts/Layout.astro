@@ -53,8 +53,57 @@ import socialImage from "../assets/og-image.png";
 <script>
   import { AuthClient } from "@dfinity/auth-client";
   import { HttpAgent } from "@dfinity/agent";
-  import { initOrbiter } from "@junobuild/analytics";
+  import { initOrbiter, trackEvent as trackEventOrbit } from "@junobuild/analytics";
   import { createActor } from "../utils/actor";
+
+  // TODO: Support multiple events.
+  const CURRENT_HARDCODED_EVENT = "DICE2024";
+
+  const SATELLITE_ID = import.meta.env.PUBLIC_JUNO_SATELLITE_ID;
+  const ORBITER_ID = import.meta.env.PUBLIC_JUNO_ORBITER_ID;
+  const isDev = import.meta.env.DEV;
+  const skipAnalytics = isDev || SATELLITE_ID === undefined || ORBITER_ID === undefined;
+
+    /**
+   * Initialize Juno Analytics only for production, and only if the required environment variables are set; otherwise, ignore.
+   */
+   const initAnalytics = async () => {
+    if (skipAnalytics) {
+      return;
+    }
+    
+    await initOrbiter({
+      orbiterId: ORBITER_ID,
+      satelliteId: SATELLITE_ID,
+    });
+
+    trackEvent({ name: "page_view", event: CURRENT_HARDCODED_EVENT });
+  }
+
+  initAnalytics();
+
+  /**
+   * Event tracking for funnel analysis:
+   * 
+   * We want to track the steps until the user reaches the success page.
+   * This will help us get insights on how many people finish the registration process
+   * and from which event they come from.
+   * 
+   * Funnel:
+   * page_view -> login_success -> registration_success
+   *                            \> registration_error
+   *           \> login_error
+   *           \> login_interrupted
+   * 
+   * Funnel metadata:
+   * * event: the event that the user is coming from.
+   */
+  const trackEvent = ({ name, event }: { name: string, event: string }) => {
+    if (skipAnalytics) {
+      return;
+    }
+    trackEventOrbit({ name, metadata: { event } });
+  };
 
   const AUTH_POPUP_WIDTH = 576;
   const AUTH_POPUP_HEIGHT = 625;
@@ -96,10 +145,12 @@ import socialImage from "../assets/og-image.png";
       authClient.login({
         onSuccess: async () => {
           try {
+            trackEvent({ name: "login_success", event: CURRENT_HARDCODED_EVENT });
             const identity = authClient.getIdentity();
             const agent = new HttpAgent({ identity, host });
             const webapp = await createActor({ canisterId, agent, fetchRootKey});
-            const registerResponse = await webapp.register_early_adopter({ event_name: ["DICE2024"] });
+            const registerResponse = await webapp.register_early_adopter({ event_name: [CURRENT_HARDCODED_EVENT] });
+            trackEvent({ name: "registration_success", event: CURRENT_HARDCODED_EVENT });
             if ("Ok" in registerResponse) {
               resolve({ status: 200, message: 'Logged in successfully!' });
             } else if ("Err" in registerResponse && "Internal" in registerResponse.Err) {
@@ -108,6 +159,7 @@ import socialImage from "../assets/og-image.png";
               resolve({ status: 400, message: registerResponse.Err.External });
             }
           } catch (err: unknown) {
+            trackEvent({ name: "registration_error", event: CURRENT_HARDCODED_EVENT });
             resolve({ status: 400, message: `There was an error while trying to register. ${err}` });
           } finally {
             busyScreen.classList.add('hide');
@@ -116,7 +168,10 @@ import socialImage from "../assets/og-image.png";
         onError: (err) => {
           // Show nothing if the user cancelled the flow.
           if (err !== "UserInterrupt") {
+            trackEvent({ name: "login_error", event: CURRENT_HARDCODED_EVENT });
             showErrorToast("The sign-in process was aborted or did not succeed.");
+          } else {
+            trackEvent({ name: "login_interrupted", event: CURRENT_HARDCODED_EVENT });
           }
           busyScreen.classList.add('hide');
           resolve({ status: 400, message: err });
@@ -158,7 +213,6 @@ import socialImage from "../assets/og-image.png";
     passive: true,
   });
 
-
   const toastElement = document.getElementById("toast-error") as HTMLElement;
   const toastMessageElement = document.getElementById("toast-error-message") as HTMLElement;
   const hideErrorToast = () => {
@@ -169,31 +223,6 @@ import socialImage from "../assets/og-image.png";
     toastElement.classList.remove("hide");
     setTimeout(hideErrorToast, 5000);
   };
-
-  /**
-   * Initialize Juno Analytics only for production, and only if the required environment variables are set; otherwise, ignore.
-   */
-  const initAnalytics = async () => {
-    const isDev = import.meta.env.DEV;
-    
-    if (isDev) {
-      return;
-    }
-    
-    const SATELLITE_ID = import.meta.env.PUBLIC_JUNO_SATELLITE_ID;
-    const ORBITER_ID = import.meta.env.PUBLIC_JUNO_ORBITER_ID;
-
-    if (SATELLITE_ID === undefined || ORBITER_ID === undefined) {
-      return;
-    }
-    
-    await initOrbiter({
-      orbiterId: ORBITER_ID,
-      satelliteId: SATELLITE_ID,
-    });
-  }
-
-  initAnalytics();
 </script>
 
 <style is:global>
