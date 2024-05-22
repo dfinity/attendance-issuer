@@ -41,14 +41,26 @@ const requestCredentials = async (credentialType: string, credentialArgs: Record
   requestVerifiablePresentation({
     onSuccess: async (verifiablePresentation: VerifiablePresentationResponse) => {
       const resultElement = document.getElementById("vc-result");
+      const presentationElement = document.getElementById("vc-presentation");
+      const aliasElement = document.getElementById("vc-alias");
+      const credentialElement = document.getElementById("vc-credential");
       if ("Ok" in verifiablePresentation) {
+        if (resultElement) {
+          resultElement.innerText = verifiablePresentation.Ok;
+        }
         const ver = decodeJwt(verifiablePresentation.Ok) as any;
+        if (presentationElement) {
+          presentationElement.innerText = JSON.stringify(ver, null, 2);
+        }
         const creds = ver.vp.verifiableCredential;
         const [alias, credential] = creds.map((cred: string) =>
           JSON.stringify(decodeJwt(cred), null, 2)
         );
-        if (resultElement) {
-          resultElement.innerText = `Alias: ${alias}\nCredential: ${credential}`;
+        if (aliasElement) {
+          aliasElement.innerText = alias;
+        }
+        if (credentialElement) {
+          credentialElement.innerText = credential;
         }
       } else {
         if (resultElement) {
