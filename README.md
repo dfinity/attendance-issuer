@@ -1,4 +1,4 @@
-# Prof Of Attendace Issuer
+# Proof Of Attendace Issuer
 
 An implementation of a Verified Credentials issuer for "EventAttendance" credentials.
 
