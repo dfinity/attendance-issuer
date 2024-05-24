@@ -77,9 +77,8 @@ if [ "$DFX_NETWORK" = "local" ]; then
   ISSUER_FRONTEND_HOSTNAME="http://${ISSUER_CANISTER_ID}.localhost:${REPLICA_SERVER_PORT}"
 fi
 if [ "$DFX_NETWORK" = "mainnet" ]; then
-  ISSUER_DERIVATION_ORIGIN="https://${ISSUER_CANISTER_ID}.icp0.io"
-  # PENDING: This should be the frontend hostname
-  ISSUER_FRONTEND_HOSTNAME="https://metaissuer.vc"
+  ISSUER_DERIVATION_ORIGIN="https://attendance.vc"
+  ISSUER_FRONTEND_HOSTNAME="https://attendance.vc"
 fi
 if [ "$DFX_NETWORK" = "ic_test" ]; then
   ISSUER_DERIVATION_ORIGIN="https://${ISSUER_CANISTER_ID}.icp0.io"
