@@ -2,7 +2,7 @@
   "meta": {
     "title": "Proof of Attendance Campaign",
     "description": "Connect with Internet Identity to earn a proof of attendance credential for DICE 2024. Use this credential to join an exclusive OpenChat group and connect with fellow conference attendees.",
-    "url": "https://early-adopter-campaign.ic0.app/",
+    "url": "https://attendance.vc",
     "og_image": "/og-image.png",
     "type": "website"
   },
@@ -98,5 +98,5 @@
   "returningLink": "or view credential on Internet Identity",
   "returningImg": "/illu-star.webp",
 
-  "openchaturl": "https://oc.app/communities/early-adopter-campaign"
+  "openchaturl": "https://oc.app/group/r56tg-hqaaa-aaaar-bfr5a-cai"
 }
