@@ -37,7 +37,7 @@ type EarlyAdoptersMap = StableBTreeMap<Principal, EarlyAdopterData, VirtualMemor
 
 const EARLY_ADOPTERS_MEMORY_ID: MemoryId = MemoryId::new(0u8);
 
-const ISSUER_URL: &str = "https://internetidentity.vc";
+const ISSUER_URL: &str = "https://attendance.vc";
 const CREDENTIAL_URL_PREFIX: &str = "data:text/plain;charset=UTF-8,";
 
 const MINUTE_NS: u64 = 60 * 1_000_000_000;
