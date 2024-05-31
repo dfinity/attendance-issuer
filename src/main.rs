@@ -537,7 +537,7 @@ async fn is_admin(id: Principal) -> bool {
 }
 
 #[query]
-#[candid_method]
+#[candid_method(query)]
 async fn list_events() -> Result<ListEventsResponse, RegisterError> {
     let user_id = caller();
     let is_controller = is_admin(user_id).await;
