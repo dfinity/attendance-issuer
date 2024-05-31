@@ -123,9 +123,13 @@ type HttpResponse = record {
     body: blob;
 };
 
-type RegisterRequest = record {
+type RegisterEventData = record {
     event_name: text;
     code: text;
+};
+
+type RegisterRequest = record {
+    event_data: opt RegisterEventData;
 };
 
 type RegisterEventRequest = record {
@@ -138,14 +142,14 @@ type RegisterEventResponse = record {
     code: text;
 };
 
-type EventData = record {
+type EventRecord = record {
     event_name: text;
     created_timestamp_s: nat32;
     code: opt text;
 };
 
 type ListEventsResponse = record {
-    events: vec EventData;
+    events: vec EventRecord;
 };
 
 service: (opt IssuerConfig) -> {

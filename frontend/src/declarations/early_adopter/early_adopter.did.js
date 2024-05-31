@@ -46,12 +46,12 @@ export const idlFactory = ({ IDL }) => {
     'headers' : IDL.Vec(HeaderField),
     'status_code' : IDL.Nat16,
   });
-  const EventData = IDL.Record({
+  const EventRecord = IDL.Record({
     'created_timestamp_s' : IDL.Nat32,
     'code' : IDL.Opt(IDL.Text),
     'event_name' : IDL.Text,
   });
-  const ListEventsResponse = IDL.Record({ 'events' : IDL.Vec(EventData) });
+  const ListEventsResponse = IDL.Record({ 'events' : IDL.Vec(EventRecord) });
   const PrepareCredentialRequest = IDL.Record({
     'signed_id_alias' : SignedIdAlias,
     'credential_spec' : CredentialSpec,
@@ -59,9 +59,12 @@ export const idlFactory = ({ IDL }) => {
   const PreparedCredentialData = IDL.Record({
     'prepared_context' : IDL.Opt(IDL.Vec(IDL.Nat8)),
   });
-  const RegisterRequest = IDL.Record({
+  const RegisterEventData = IDL.Record({
     'code' : IDL.Text,
     'event_name' : IDL.Text,
+  });
+  const RegisterRequest = IDL.Record({
+    'event_data' : IDL.Opt(RegisterEventData),
   });
   const UserEventData = IDL.Record({
     'joined_timestamp_s' : IDL.Nat32,

@@ -15,7 +15,7 @@ export interface EarlyAdopterResponse {
   'joined_timestamp_s' : number,
   'events' : Array<UserEventData>,
 }
-export interface EventData {
+export interface EventRecord {
   'created_timestamp_s' : number,
   'code' : [] | [string],
   'event_name' : string,
@@ -66,7 +66,7 @@ export interface IssuerConfig {
   'ic_root_key_der' : Uint8Array | number[],
   'frontend_hostname' : string,
 }
-export interface ListEventsResponse { 'events' : Array<EventData> }
+export interface ListEventsResponse { 'events' : Array<EventRecord> }
 export interface PrepareCredentialRequest {
   'signed_id_alias' : SignedIdAlias,
   'credential_spec' : CredentialSpec,
@@ -76,13 +76,14 @@ export interface PreparedCredentialData {
 }
 export type RegisterError = { 'Internal' : string } |
   { 'External' : string };
+export interface RegisterEventData { 'code' : string, 'event_name' : string }
 export interface RegisterEventRequest { 'event_name' : string }
 export interface RegisterEventResponse {
   'created_timestamp_s' : number,
   'code' : string,
   'event_name' : string,
 }
-export interface RegisterRequest { 'code' : string, 'event_name' : string }
+export interface RegisterRequest { 'event_data' : [] | [RegisterEventData] }
 export interface SignedIdAlias { 'credential_jws' : string }
 export interface UserEventData {
   'joined_timestamp_s' : number,

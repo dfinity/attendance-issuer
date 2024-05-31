@@ -151,7 +151,7 @@ import socialImage from "../assets/og-image.png";
             const agent = new HttpAgent({ identity, host });
             const webapp = await createActor({ canisterId, agent, fetchRootKey});
             // Login button is only present if the query param with a code appears
-            const registerResponse = await webapp.register_early_adopter({ event_name: eventName, code: currentEvent?.code ?? "" });
+            const registerResponse = await webapp.register_early_adopter({ event_data: [{ event_name: eventName, code: currentEvent?.code ?? "" }] });
             if ("Ok" in registerResponse) {
               trackEvent({ name: "registration_success", event: eventName });
               resolve({ status: 200, message: 'Logged in successfully!' });

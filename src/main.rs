@@ -113,9 +113,14 @@ pub enum RegisterError {
 }
 
 #[derive(CandidType, Clone, Deserialize)]
-pub struct RegisterRequest {
+pub struct RegisterEventData {
     pub event_name: String,
     pub code: String,
+}
+
+#[derive(CandidType, Clone, Deserialize)]
+pub struct RegisterRequest {
+    pub event_data: Option<RegisterEventData>,
 }
 
 #[derive(CandidType, Clone, Deserialize)]
@@ -648,45 +653,64 @@ fn get_event(event_name: String) -> Option<EventRecord> {
 fn register_early_adopter(request: RegisterRequest) -> Result<EarlyAdopterResponse, RegisterError> {
     let user_id = caller();
     let now_s = (time() / 1_000_000_000) as u32;
-    // Exit early if the event_name is present by is empty.
-    if request.event_name.clone().is_empty() {
-        return Err(RegisterError::External(
-            "event_name cannot be an empty string if present".to_string(),
-        ));
+    // Validate event name and code (if present)
+    if let Some(requested_event) = request.event_data.clone() {
+        // Exit early if the event_name is present by is empty.
+        if requested_event.event_name.clone().is_empty() {
+            return Err(RegisterError::External(
+                "event_name cannot be an empty string if present".to_string(),
+            ));
+        }
+        // Exit early if the event doesn't exist.
+        let Some(event_record) = get_event(requested_event.event_name.clone()) else {
+            return Err(RegisterError::Internal(format!(
+                "Event {} does not exist",
+                requested_event.event_name
+            )));
+        };
+        // Exit early if the passed code doesn't match the event code
+        if event_record.code != requested_event.code {
+            return Err(RegisterError::Internal(format!(
+                "Code doesn't match for Event {}",
+                requested_event.event_name
+            )));
+        }
     }
-    // Exit early if the event doesn't exist.
-    let Some(event_record) = get_event(request.event_name.clone()) else {
-        return Err(RegisterError::Internal(format!(
-            "Event {} does not exist",
-            request.event_name
-        )));
-    };
-    // Exit early if the passed code doesn't match the event code
-    if event_record.code != request.code {
-        return Err(RegisterError::Internal(format!(
-            "Code doesn't match for Event {}",
-            request.event_name
-        )));
-    }
+    // At this point, the event is present and the code is valid.
     let current_data = EARLY_ADOPTERS.with_borrow_mut(|adopters| {
-        if let Some(mut data) = adopters.get(&user_id) {
-            let new_event = UserEventRecord {
-                joined_timestamp_s: now_s,
-            };
-            data.events.insert(request.event_name.clone(), new_event);
-            data
+        if let Some(requested_event) = request.event_data.clone() {
+            if let Some(mut data) = adopters.get(&user_id) {
+                let new_event = UserEventRecord {
+                    joined_timestamp_s: now_s,
+                };
+                data.events
+                    .insert(requested_event.event_name.clone(), new_event);
+                data
+            } else {
+                let mut events = BTreeMap::new();
+                let first_event = UserEventRecord {
+                    joined_timestamp_s: now_s,
+                };
+                events.insert(requested_event.event_name.clone(), first_event);
+                let new_data = EarlyAdopterData {
+                    joined_timestamp_s: now_s,
+                    events,
+                };
+                adopters.insert(user_id, new_data.clone());
+                new_data
+            }
         } else {
-            let mut events = BTreeMap::new();
-            let first_event = UserEventRecord {
-                joined_timestamp_s: now_s,
-            };
-            events.insert(request.event_name.clone(), first_event);
-            let new_data = EarlyAdopterData {
-                joined_timestamp_s: now_s,
-                events,
-            };
-            adopters.insert(user_id, new_data.clone());
-            new_data
+            if let Some(data) = adopters.get(&user_id) {
+                data
+            } else {
+                let events = BTreeMap::new();
+                let new_data = EarlyAdopterData {
+                    joined_timestamp_s: now_s,
+                    events,
+                };
+                adopters.insert(user_id, new_data.clone());
+                new_data
+            }
         }
     });
     println!(
