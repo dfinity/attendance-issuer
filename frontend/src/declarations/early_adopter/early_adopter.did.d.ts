@@ -105,7 +105,11 @@ export interface _SERVICE {
       { 'Err' : IssueCredentialError }
   >,
   'http_request' : ActorMethod<[HttpRequest], HttpResponse>,
-  'list_events' : ActorMethod<[], ListEventsResponse>,
+  'list_events' : ActorMethod<
+    [],
+    { 'Ok' : ListEventsResponse } |
+      { 'Err' : RegisterError }
+  >,
   'prepare_credential' : ActorMethod<
     [PrepareCredentialRequest],
     { 'Ok' : PreparedCredentialData } |

@@ -538,7 +538,7 @@ async fn is_admin(id: Principal) -> bool {
 
 #[query]
 #[candid_method]
-async fn list_events() -> ListEventsResponse {
+async fn list_events() -> Result<ListEventsResponse, RegisterError> {
     let user_id = caller();
     let is_controller = is_admin(user_id).await;
     EVENTS.with_borrow(|events| {
@@ -550,7 +550,7 @@ async fn list_events() -> ListEventsResponse {
                 code: if is_controller { Some(data.code) } else { None },
             })
             .collect();
-        ListEventsResponse { events }
+        Ok(ListEventsResponse { events })
     })
 }
 

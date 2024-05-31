@@ -52,6 +52,10 @@ export const idlFactory = ({ IDL }) => {
     'event_name' : IDL.Text,
   });
   const ListEventsResponse = IDL.Record({ 'events' : IDL.Vec(EventRecord) });
+  const RegisterError = IDL.Variant({
+    'Internal' : IDL.Text,
+    'External' : IDL.Text,
+  });
   const PrepareCredentialRequest = IDL.Record({
     'signed_id_alias' : SignedIdAlias,
     'credential_spec' : CredentialSpec,
@@ -73,10 +77,6 @@ export const idlFactory = ({ IDL }) => {
   const EarlyAdopterResponse = IDL.Record({
     'joined_timestamp_s' : IDL.Nat32,
     'events' : IDL.Vec(UserEventData),
-  });
-  const RegisterError = IDL.Variant({
-    'Internal' : IDL.Text,
-    'External' : IDL.Text,
   });
   const RegisterEventRequest = IDL.Record({
     'code' : IDL.Opt(IDL.Text),
@@ -128,7 +128,11 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'http_request' : IDL.Func([HttpRequest], [HttpResponse], ['query']),
-    'list_events' : IDL.Func([], [ListEventsResponse], ['query']),
+    'list_events' : IDL.Func(
+        [],
+        [IDL.Variant({ 'Ok' : ListEventsResponse, 'Err' : RegisterError })],
+        ['query'],
+      ),
     'prepare_credential' : IDL.Func(
         [PrepareCredentialRequest],
         [
