@@ -1,7 +1,13 @@
+use asset_util::{collect_assets, CertifiedAssets};
 use candid::{candid_method, CandidType, Deserialize, Principal};
 use canister_sig_util::signature_map::{SignatureMap, LABEL_SIG};
 use canister_sig_util::{extract_raw_root_pk_from_der, CanisterSigPublicKey, IC_ROOT_PK_DER};
+use ic_cdk::api::call::RejectionCode;
+use ic_cdk::api::management_canister::main::{
+    canister_status, raw_rand, CanisterIdRecord, CanisterStatusResponse,
+};
 use ic_cdk::api::{caller, set_certified_data, time};
+use ic_cdk_macros::post_upgrade;
 use ic_cdk_macros::{init, query, update};
 use ic_certification::{fork_hash, labeled_hash, pruned, Hash};
 use ic_metrics_encoder::MetricsEncoder;
@@ -26,16 +32,15 @@ use vc_util::{
     vc_signing_input, vc_signing_input_hash, AliasTuple, CredentialParams,
 };
 
-use asset_util::{collect_assets, CertifiedAssets};
-use ic_cdk_macros::post_upgrade;
-
 /// We use restricted memory in order to ensure the separation between non-managed config memory (first page)
 /// and the managed memory for potential other data of the canister.
 type Memory = RestrictedMemory<DefaultMemoryImpl>;
 type ConfigCell = StableCell<IssuerConfig, Memory>;
 type EarlyAdoptersMap = StableBTreeMap<Principal, EarlyAdopterData, VirtualMemory<Memory>>;
+type EventsMap = StableBTreeMap<String, EventRecord, VirtualMemory<Memory>>;
 
 const EARLY_ADOPTERS_MEMORY_ID: MemoryId = MemoryId::new(0u8);
+const EVENTS_MEMORY_ID: MemoryId = MemoryId::new(1u8);
 
 const ISSUER_URL: &str = "https://attendance.vc";
 const CREDENTIAL_URL_PREFIX: &str = "data:text/plain;charset=UTF-8,";
@@ -47,9 +52,26 @@ const VC_EXPIRATION_PERIOD_NS: u64 = 15 * MINUTE_NS;
 // End of year 2024 as UNIX timestamp.
 const EOY_2024_TIMESTAMP_S: u32 = 1735685999;
 
+// Internal container of per-event data.
+#[derive(CandidType, Clone, Deserialize)]
+struct EventRecord {
+    pub created_timestamp_s: u32,
+    pub code: String,
+}
+
+impl Storable for EventRecord {
+    fn to_bytes(&self) -> Cow<[u8]> {
+        Cow::Owned(candid::encode_one(self).expect("failed to encode EventRecord"))
+    }
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        candid::decode_one(&bytes).expect("failed to decode EventRecord")
+    }
+    const BOUND: Bound = Bound::Unbounded;
+}
+
 // Type to return event data to the client
 #[derive(CandidType, Clone, Deserialize)]
-pub struct EventData {
+pub struct UserEventData {
     pub joined_timestamp_s: u32,
     pub event_name: String,
 }
@@ -59,11 +81,11 @@ pub struct EventData {
 struct EarlyAdopterData {
     pub joined_timestamp_s: u32,
     // BTreeMap<event_name, EventRecord>
-    pub events: BTreeMap<String, EventRecord>,
+    pub events: BTreeMap<String, UserEventRecord>,
 }
 // Internal container of per-user-event data.
 #[derive(CandidType, Clone, Deserialize)]
-struct EventRecord {
+struct UserEventRecord {
     pub joined_timestamp_s: u32,
 }
 
@@ -81,18 +103,44 @@ impl Storable for EarlyAdopterData {
 #[derive(CandidType, Deserialize)]
 pub struct EarlyAdopterResponse {
     pub joined_timestamp_s: u32,
-    pub events: Vec<EventData>,
+    pub events: Vec<UserEventData>,
 }
 
 #[derive(CandidType, Deserialize)]
-pub enum EarlyAdopterError {
+pub enum RegisterError {
     Internal(String),
     External(String),
 }
 
 #[derive(CandidType, Clone, Deserialize)]
 pub struct RegisterRequest {
-    pub event_name: Option<String>,
+    pub event_name: String,
+    pub code: String,
+}
+
+#[derive(CandidType, Clone, Deserialize)]
+pub struct RegisterEventRequest {
+    pub event_name: String,
+}
+
+#[derive(CandidType, Clone, Deserialize)]
+pub struct RegisterEventResponse {
+    pub event_name: String,
+    pub code: String,
+    pub created_timestamp_s: u32,
+}
+
+// User-facing container per-event data.
+#[derive(CandidType, Clone, Deserialize)]
+pub struct EventData {
+    pub event_name: String,
+    pub code: Option<String>,
+    pub created_timestamp_s: u32,
+}
+
+#[derive(CandidType, Clone, Deserialize)]
+pub struct ListEventsResponse {
+    pub events: Vec<EventData>,
 }
 
 thread_local! {
@@ -104,8 +152,13 @@ thread_local! {
         RefCell::new(MemoryManager::init(managed_memory()));
 
     static EARLY_ADOPTERS : RefCell<EarlyAdoptersMap> = RefCell::new(
-      StableBTreeMap::init(
+        StableBTreeMap::init(
             MEMORY_MANAGER.with(|m| m.borrow().get(EARLY_ADOPTERS_MEMORY_ID)),
+    ));
+
+    static EVENTS : RefCell<EventsMap> = RefCell::new(
+        StableBTreeMap::init(
+              MEMORY_MANAGER.with(|m| m.borrow().get(EVENTS_MEMORY_ID)),
     ));
 
     /// Non-stable structures
@@ -470,38 +523,164 @@ fn verify_event_attendance_and_get_event_name(spec: &CredentialSpec) -> Result<&
     }
 }
 
+async fn is_admin(id: Principal) -> bool {
+    match get_controllers().await {
+        Some(controllers) => controllers.contains(&id),
+        None => false,
+    }
+}
+
+#[query]
+#[candid_method]
+async fn list_events() -> ListEventsResponse {
+    let user_id = caller();
+    let is_controller = is_admin(user_id).await;
+    EVENTS.with_borrow(|events| {
+        let events: Vec<EventData> = events
+            .iter()
+            .map(|(event_name, data)| EventData {
+                created_timestamp_s: data.created_timestamp_s.clone(),
+                event_name: event_name.clone(),
+                code: if is_controller { Some(data.code) } else { None },
+            })
+            .collect();
+        ListEventsResponse { events }
+    })
+}
+
+async fn get_canister_status() -> Result<CanisterStatusResponse, (RejectionCode, String)> {
+    let val = canister_status(CanisterIdRecord {
+        canister_id: ic_cdk::id(),
+    })
+    .await?;
+
+    Ok(val.0)
+}
+
+async fn get_controllers() -> Option<Vec<Principal>> {
+    match get_canister_status().await {
+        Ok(canister_status) => Some(canister_status.settings.controllers),
+        Err(_) => None,
+    }
+}
+
+// Returns a randome string of length 24
+async fn generate_random_code() -> Option<String> {
+    match raw_rand().await {
+        Ok(rand_bytes) => {
+            let mut chars: Vec<u8> = vec![];
+            let a: u8 = b'a';
+            let z: u8 = b'z';
+            for i in rand_bytes.0.iter() {
+                let next: u8 = i % (z - a) + a;
+                chars.push(next);
+            }
+
+            match String::from_utf8(chars) {
+                Ok(random_string) => Some(random_string),
+                Err(_) => None,
+            }
+        }
+        Err(_) => None,
+    }
+}
+
 #[update]
 #[candid_method]
-fn register_early_adopter(
-    request: RegisterRequest,
-) -> Result<EarlyAdopterResponse, EarlyAdopterError> {
+async fn register_event(
+    request: RegisterEventRequest,
+) -> Result<RegisterEventResponse, RegisterError> {
     let user_id = caller();
     let now_s = (time() / 1_000_000_000) as u32;
     // Exit early if the event_name is present by is empty.
-    if let Some(event_name) = request.clone().event_name {
-        if event_name.clone().is_empty() {
-            return Err(EarlyAdopterError::External(
-                "event_name cannot be an empty string if present".to_string(),
+    if request.event_name.clone().is_empty() {
+        return Err(RegisterError::External(
+            "event_name cannot be an empty string if present".to_string(),
+        ));
+    }
+    if let Some(_) = get_event(request.event_name.clone()) {
+        return Err(RegisterError::External(format!(
+            "Event {} already exists",
+            request.event_name.clone()
+        )));
+    }
+    if is_admin(user_id).await {
+        let Some(code) = generate_random_code().await else {
+            return Err(RegisterError::Internal(
+                "There was an error creating the random code. Please try again.".to_string(),
             ));
+        };
+        EVENTS.with_borrow_mut(|events| {
+            let new_event = EventRecord {
+                created_timestamp_s: now_s,
+                code: code.clone(),
+            };
+            events.insert(request.event_name.clone(), new_event);
+        });
+        println!(
+            "Registered Event {} at timestamp {}.",
+            request.event_name, now_s
+        );
+        Ok(RegisterEventResponse {
+            event_name: request.event_name,
+            code,
+            created_timestamp_s: now_s,
+        })
+    } else {
+        return Err(RegisterError::External(
+            "Only controllers can register events".to_string(),
+        ));
+    }
+}
+
+fn get_event(event_name: String) -> Option<EventRecord> {
+    EVENTS.with_borrow(|events| {
+        if let Some(event_record) = events.get(&event_name) {
+            Some(event_record)
+        } else {
+            None
         }
+    })
+}
+
+#[update]
+#[candid_method]
+fn register_early_adopter(request: RegisterRequest) -> Result<EarlyAdopterResponse, RegisterError> {
+    let user_id = caller();
+    let now_s = (time() / 1_000_000_000) as u32;
+    // Exit early if the event_name is present by is empty.
+    if request.event_name.clone().is_empty() {
+        return Err(RegisterError::External(
+            "event_name cannot be an empty string if present".to_string(),
+        ));
+    }
+    // Exit early if the event doesn't exist.
+    let Some(event_record) = get_event(request.event_name.clone()) else {
+        return Err(RegisterError::Internal(format!(
+            "Event {} does not exist",
+            request.event_name
+        )));
+    };
+    // Exit early if the passed code doesn't match the event code
+    if event_record.code != request.code {
+        return Err(RegisterError::Internal(format!(
+            "Code doesn't match for Event {}",
+            request.event_name
+        )));
     }
     let current_data = EARLY_ADOPTERS.with_borrow_mut(|adopters| {
         if let Some(mut data) = adopters.get(&user_id) {
-            if let Some(event_name) = request.event_name {
-                let new_event = EventRecord {
-                    joined_timestamp_s: now_s,
-                };
-                data.events.insert(event_name.clone(), new_event);
-            }
+            let new_event = UserEventRecord {
+                joined_timestamp_s: now_s,
+            };
+            data.events.insert(request.event_name.clone(), new_event);
             data
         } else {
             let mut events = BTreeMap::new();
-            if let Some(event_name) = request.event_name {
-                let first_event = EventRecord {
-                    joined_timestamp_s: now_s,
-                };
-                events.insert(event_name.clone(), first_event);
-            }
+            let first_event = UserEventRecord {
+                joined_timestamp_s: now_s,
+            };
+            events.insert(request.event_name.clone(), first_event);
             let new_data = EarlyAdopterData {
                 joined_timestamp_s: now_s,
                 events,
@@ -511,14 +690,14 @@ fn register_early_adopter(
         }
     });
     println!(
-        "Registered {} at timestamp {}.",
+        "Registered User {} at timestamp {}.",
         user_id.to_text(),
         current_data.joined_timestamp_s
     );
-    let events: Vec<EventData> = current_data
+    let events: Vec<UserEventData> = current_data
         .events
         .iter()
-        .map(|(event_name, data)| EventData {
+        .map(|(event_name, data)| UserEventData {
             joined_timestamp_s: data.joined_timestamp_s.clone(),
             event_name: event_name.clone(),
         })

@@ -11,14 +11,13 @@ export interface DerivationOriginData { 'origin' : string }
 export type DerivationOriginError = { 'Internal' : string } |
   { 'UnsupportedOrigin' : string };
 export interface DerivationOriginRequest { 'frontend_hostname' : string }
-export type EarlyAdopterError = { 'Internal' : string } |
-  { 'External' : string };
 export interface EarlyAdopterResponse {
   'joined_timestamp_s' : number,
-  'events' : Array<EventData>,
+  'events' : Array<UserEventData>,
 }
 export interface EventData {
-  'joined_timestamp_s' : number,
+  'created_timestamp_s' : number,
+  'code' : [] | [string],
   'event_name' : string,
 }
 export interface GetCredentialRequest {
@@ -67,6 +66,7 @@ export interface IssuerConfig {
   'ic_root_key_der' : Uint8Array | number[],
   'frontend_hostname' : string,
 }
+export interface ListEventsResponse { 'events' : Array<EventData> }
 export interface PrepareCredentialRequest {
   'signed_id_alias' : SignedIdAlias,
   'credential_spec' : CredentialSpec,
@@ -74,8 +74,20 @@ export interface PrepareCredentialRequest {
 export interface PreparedCredentialData {
   'prepared_context' : [] | [Uint8Array | number[]],
 }
-export interface RegisterRequest { 'event_name' : [] | [string] }
+export type RegisterError = { 'Internal' : string } |
+  { 'External' : string };
+export interface RegisterEventRequest { 'event_name' : string }
+export interface RegisterEventResponse {
+  'created_timestamp_s' : number,
+  'code' : string,
+  'event_name' : string,
+}
+export interface RegisterRequest { 'code' : string, 'event_name' : string }
 export interface SignedIdAlias { 'credential_jws' : string }
+export interface UserEventData {
+  'joined_timestamp_s' : number,
+  'event_name' : string,
+}
 export interface _SERVICE {
   'configure' : ActorMethod<[IssuerConfig], undefined>,
   'derivation_origin' : ActorMethod<
@@ -89,6 +101,7 @@ export interface _SERVICE {
       { 'Err' : IssueCredentialError }
   >,
   'http_request' : ActorMethod<[HttpRequest], HttpResponse>,
+  'list_events' : ActorMethod<[], ListEventsResponse>,
   'prepare_credential' : ActorMethod<
     [PrepareCredentialRequest],
     { 'Ok' : PreparedCredentialData } |
@@ -97,7 +110,12 @@ export interface _SERVICE {
   'register_early_adopter' : ActorMethod<
     [RegisterRequest],
     { 'Ok' : EarlyAdopterResponse } |
-      { 'Err' : EarlyAdopterError }
+      { 'Err' : RegisterError }
+  >,
+  'register_event' : ActorMethod<
+    [RegisterEventRequest],
+    { 'Ok' : RegisterEventResponse } |
+      { 'Err' : RegisterError }
   >,
   'vc_consent_message' : ActorMethod<
     [Icrc21VcConsentMessageRequest],

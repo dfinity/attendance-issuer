@@ -46,6 +46,12 @@ export const idlFactory = ({ IDL }) => {
     'headers' : IDL.Vec(HeaderField),
     'status_code' : IDL.Nat16,
   });
+  const EventData = IDL.Record({
+    'created_timestamp_s' : IDL.Nat32,
+    'code' : IDL.Opt(IDL.Text),
+    'event_name' : IDL.Text,
+  });
+  const ListEventsResponse = IDL.Record({ 'events' : IDL.Vec(EventData) });
   const PrepareCredentialRequest = IDL.Record({
     'signed_id_alias' : SignedIdAlias,
     'credential_spec' : CredentialSpec,
@@ -53,18 +59,27 @@ export const idlFactory = ({ IDL }) => {
   const PreparedCredentialData = IDL.Record({
     'prepared_context' : IDL.Opt(IDL.Vec(IDL.Nat8)),
   });
-  const RegisterRequest = IDL.Record({ 'event_name' : IDL.Opt(IDL.Text) });
-  const EventData = IDL.Record({
+  const RegisterRequest = IDL.Record({
+    'code' : IDL.Text,
+    'event_name' : IDL.Text,
+  });
+  const UserEventData = IDL.Record({
     'joined_timestamp_s' : IDL.Nat32,
     'event_name' : IDL.Text,
   });
   const EarlyAdopterResponse = IDL.Record({
     'joined_timestamp_s' : IDL.Nat32,
-    'events' : IDL.Vec(EventData),
+    'events' : IDL.Vec(UserEventData),
   });
-  const EarlyAdopterError = IDL.Variant({
+  const RegisterError = IDL.Variant({
     'Internal' : IDL.Text,
     'External' : IDL.Text,
+  });
+  const RegisterEventRequest = IDL.Record({ 'event_name' : IDL.Text });
+  const RegisterEventResponse = IDL.Record({
+    'created_timestamp_s' : IDL.Nat32,
+    'code' : IDL.Text,
+    'event_name' : IDL.Text,
   });
   const Icrc21ConsentPreferences = IDL.Record({ 'language' : IDL.Text });
   const Icrc21VcConsentMessageRequest = IDL.Record({
@@ -107,6 +122,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'http_request' : IDL.Func([HttpRequest], [HttpResponse], ['query']),
+    'list_events' : IDL.Func([], [ListEventsResponse], ['query']),
     'prepare_credential' : IDL.Func(
         [PrepareCredentialRequest],
         [
@@ -119,12 +135,12 @@ export const idlFactory = ({ IDL }) => {
       ),
     'register_early_adopter' : IDL.Func(
         [RegisterRequest],
-        [
-          IDL.Variant({
-            'Ok' : EarlyAdopterResponse,
-            'Err' : EarlyAdopterError,
-          }),
-        ],
+        [IDL.Variant({ 'Ok' : EarlyAdopterResponse, 'Err' : RegisterError })],
+        [],
+      ),
+    'register_event' : IDL.Func(
+        [RegisterEventRequest],
+        [IDL.Variant({ 'Ok' : RegisterEventResponse, 'Err' : RegisterError })],
         [],
       ),
     'vc_consent_message' : IDL.Func(

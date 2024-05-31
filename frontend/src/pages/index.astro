@@ -29,7 +29,7 @@ import GithubIcon from "../assets/GithubIcon.svg";
           <span>{content.mainTitle3}</span>
         </h1>
         <p class="lead-text">{content.mainLead}</p>
-        <button class="button" data-tid="login-button" data-login>{content.iibuttontext}</button>
+        <button class="button hidden" data-tid="login-button" data-login>{content.iibuttontext}</button>
       </div>
       <div class="card__image">
         <img src={content.mainImage} alt="Internet Identity" />
@@ -86,3 +86,15 @@ import GithubIcon from "../assets/GithubIcon.svg";
   </div>
 </Layout>
 
+<script>
+  import { getEventFromParams } from "../utils/get-event-from-params";
+
+  const enableLogin = () => {
+    const loginButton = document.querySelector("[data-login]");
+    const currentEvent = getEventFromParams();
+    if (currentEvent && loginButton) {
+      loginButton.classList.remove("hidden");
+    }
+  };
+  enableLogin();
+</script>
