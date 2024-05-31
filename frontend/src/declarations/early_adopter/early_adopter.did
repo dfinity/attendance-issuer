@@ -134,6 +134,7 @@ type RegisterRequest = record {
 
 type RegisterEventRequest = record {
     event_name: text;
+    code: opt text;
 };
 
 type RegisterEventResponse = record {

@@ -78,7 +78,10 @@ export const idlFactory = ({ IDL }) => {
     'Internal' : IDL.Text,
     'External' : IDL.Text,
   });
-  const RegisterEventRequest = IDL.Record({ 'event_name' : IDL.Text });
+  const RegisterEventRequest = IDL.Record({
+    'code' : IDL.Opt(IDL.Text),
+    'event_name' : IDL.Text,
+  });
   const RegisterEventResponse = IDL.Record({
     'created_timestamp_s' : IDL.Nat32,
     'code' : IDL.Text,

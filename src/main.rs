@@ -126,6 +126,7 @@ pub struct RegisterRequest {
 #[derive(CandidType, Clone, Deserialize)]
 pub struct RegisterEventRequest {
     pub event_name: String,
+    pub code: Option<String>,
 }
 
 #[derive(CandidType, Clone, Deserialize)]
@@ -610,10 +611,17 @@ async fn register_event(
         )));
     }
     if is_admin(user_id).await {
-        let Some(code) = generate_random_code().await else {
-            return Err(RegisterError::Internal(
-                "There was an error creating the random code. Please try again.".to_string(),
-            ));
+        let code = match request.code {
+            Some(code) => code,
+            None => {
+                let Some(code) = generate_random_code().await else {
+                    return Err(RegisterError::Internal(
+                        "There was an error creating the random code. Please try again."
+                            .to_string(),
+                    ));
+                };
+                code
+            }
         };
         EVENTS.with_borrow_mut(|events| {
             let new_event = EventRecord {

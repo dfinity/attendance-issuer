@@ -77,7 +77,10 @@ export interface PreparedCredentialData {
 export type RegisterError = { 'Internal' : string } |
   { 'External' : string };
 export interface RegisterEventData { 'code' : string, 'event_name' : string }
-export interface RegisterEventRequest { 'event_name' : string }
+export interface RegisterEventRequest {
+  'code' : [] | [string],
+  'event_name' : string,
+}
 export interface RegisterEventResponse {
   'created_timestamp_s' : number,
   'code' : string,
