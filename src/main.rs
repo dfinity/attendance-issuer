@@ -74,7 +74,7 @@ impl Storable for EventRecord {
 #[derive(CandidType, Clone, Deserialize)]
 pub struct UserEventData {
     pub joined_timestamp_s: u32,
-    pub event_name: String,
+    pub event_name: EventName,
 }
 
 // Internal container of per-user data.
@@ -126,13 +126,13 @@ pub struct RegisterRequest {
 
 #[derive(CandidType, Clone, Deserialize)]
 pub struct RegisterEventRequest {
-    pub event_name: String,
+    pub event_name: EventName,
     pub code: Option<String>,
 }
 
 #[derive(CandidType, Clone, Deserialize)]
 pub struct RegisterEventResponse {
-    pub event_name: String,
+    pub event_name: EventName,
     pub code: String,
     pub created_timestamp_s: u32,
 }
@@ -140,7 +140,7 @@ pub struct RegisterEventResponse {
 // User-facing container per-event data.
 #[derive(CandidType, Clone, Deserialize)]
 pub struct EventData {
-    pub event_name: String,
+    pub event_name: EventName,
     pub code: Option<String>,
     pub created_timestamp_s: u32,
 }
