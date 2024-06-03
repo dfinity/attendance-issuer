@@ -113,6 +113,13 @@ impl Default for IssuerInit {
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct EventData {
+    pub event_name: String,
+    pub code: Option<String>,
+    pub created_timestamp_s: u32,
+}
+
+#[derive(CandidType, Clone, Deserialize, Debug)]
+pub struct UserEventData {
     pub joined_timestamp_s: u32,
     pub event_name: String,
 }
@@ -120,6 +127,11 @@ pub struct EventData {
 #[derive(CandidType, Deserialize, Debug)]
 pub struct EarlyAdopterResponse {
     pub joined_timestamp_s: u32,
+    pub events: Vec<UserEventData>,
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct ListEventsResponse {
     pub events: Vec<EventData>,
 }
 
@@ -226,6 +238,14 @@ mod api {
         request: &RegisterEventRequest,
     ) -> Result<Result<RegisterEventResponse, EarlyAdopterError>, CallError> {
         call_candid_as(env, canister_id, sender, "register_event", (request,)).map(|(x,)| x)
+    }
+
+    pub fn list_events(
+        env: &StateMachine,
+        canister_id: CanisterId,
+        sender: Principal,
+    ) -> Result<Result<ListEventsResponse, EarlyAdopterError>, CallError> {
+        call_candid_as(env, canister_id, sender, "list_events", ()).map(|(x,)| x)
     }
 
     pub fn register_early_adopter(
@@ -1133,10 +1153,14 @@ fn should_register_event_with_random_code() -> Result<(), CallError> {
         code: None,
     };
 
-    let event =
-        api::register_event(&env, issuer_id, controller(), &empty_event)?.expect("API call failed");
+    api::register_event(&env, issuer_id, controller(), &empty_event)?
+        .expect("API call to register event failed");
 
-    assert!(event.code.len() > 0);
+    let events_response =
+        api::list_events(&env, issuer_id, controller())?.expect("API to list events failed");
+
+    assert!(events_response.events.len() == 1);
+    assert_matches!(events_response.events[0].code, Some(_));
 
     Ok(())
 }
@@ -1151,10 +1175,66 @@ fn should_register_event_with_code() -> Result<(), CallError> {
         code: Some(code.clone()),
     };
 
-    let event =
-        api::register_event(&env, issuer_id, controller(), &empty_event)?.expect("API call failed");
+    api::register_event(&env, issuer_id, controller(), &empty_event)?.expect("API call failed");
 
-    assert_eq!(event.code, code);
+    let events_response =
+        api::list_events(&env, issuer_id, controller())?.expect("API to list events failed");
+
+    assert!(events_response.events.len() == 1);
+    assert_eq!(events_response.events[0].code.clone().unwrap(), code);
+
+    Ok(())
+}
+
+#[test]
+fn should_not_register_same_event_name_twice() -> Result<(), CallError> {
+    let env = env();
+    let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
+    let code = "code".to_string();
+    let empty_event = RegisterEventRequest {
+        event_name: "Test".to_string(),
+        code: Some(code.clone()),
+    };
+
+    api::register_event(&env, issuer_id, controller(), &empty_event)?.expect("API call failed");
+    let register_response =
+        api::register_event(&env, issuer_id, controller(), &empty_event)?.unwrap_err();
+
+    match register_response {
+        EarlyAdopterError::External(msg) => {
+            assert!(msg.contains("already exists"))
+        }
+        _ => assert!(false),
+    }
+
+    Ok(())
+}
+
+#[test]
+fn should_register_events() -> Result<(), CallError> {
+    let env = env();
+    let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
+    let event_1 = RegisterEventRequest {
+        event_name: "Test 1".to_string(),
+        code: None,
+    };
+    let event_2 = RegisterEventRequest {
+        event_name: "Test 2".to_string(),
+        code: None,
+    };
+    let event_3 = RegisterEventRequest {
+        event_name: "Test 3".to_string(),
+        code: None,
+    };
+
+    api::register_event(&env, issuer_id, controller(), &event_1)?.expect("API call failed");
+    api::register_event(&env, issuer_id, controller(), &event_2)?.expect("API call failed");
+    api::register_event(&env, issuer_id, controller(), &event_3)?.expect("API call failed");
+
+    let events_response =
+        api::list_events(&env, issuer_id, controller())?.expect("API to list events failed");
+
+    assert!(events_response.events.len() == 3);
 
     Ok(())
 }

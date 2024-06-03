@@ -2,11 +2,8 @@ use asset_util::{collect_assets, CertifiedAssets};
 use candid::{candid_method, CandidType, Deserialize, Principal};
 use canister_sig_util::signature_map::{SignatureMap, LABEL_SIG};
 use canister_sig_util::{extract_raw_root_pk_from_der, CanisterSigPublicKey, IC_ROOT_PK_DER};
-use ic_cdk::api::call::RejectionCode;
-use ic_cdk::api::management_canister::main::{
-    canister_status, raw_rand, CanisterIdRecord, CanisterStatusResponse,
-};
-use ic_cdk::api::{caller, set_certified_data, time};
+use ic_cdk::api::management_canister::main::raw_rand;
+use ic_cdk::api::{caller, is_controller, set_certified_data, time};
 use ic_cdk_macros::post_upgrade;
 use ic_cdk_macros::{init, query, update};
 use ic_certification::{fork_hash, labeled_hash, pruned, Hash};
@@ -529,15 +526,13 @@ fn verify_event_attendance_and_get_event_name(spec: &CredentialSpec) -> Result<&
     }
 }
 
+// TODO: Create and manage admins instead of using canister controllers.
 async fn is_admin(id: Principal) -> bool {
-    match get_controllers().await {
-        Some(controllers) => controllers.contains(&id),
-        None => false,
-    }
+    is_controller(&id)
 }
 
-#[query]
-#[candid_method(query)]
+#[update]
+#[candid_method]
 async fn list_events() -> Result<ListEventsResponse, RegisterError> {
     let user_id = caller();
     let is_controller = is_admin(user_id).await;
@@ -554,23 +549,7 @@ async fn list_events() -> Result<ListEventsResponse, RegisterError> {
     })
 }
 
-async fn get_canister_status() -> Result<CanisterStatusResponse, (RejectionCode, String)> {
-    let val = canister_status(CanisterIdRecord {
-        canister_id: ic_cdk::id(),
-    })
-    .await?;
-
-    Ok(val.0)
-}
-
-async fn get_controllers() -> Option<Vec<Principal>> {
-    match get_canister_status().await {
-        Ok(canister_status) => Some(canister_status.settings.controllers),
-        Err(_) => None,
-    }
-}
-
-// Returns a randome string of length 24
+// Returns a random string of length 24
 async fn generate_random_code() -> Option<String> {
     match raw_rand().await {
         Ok(rand_bytes) => {

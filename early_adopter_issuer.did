@@ -166,7 +166,7 @@ service: (opt IssuerConfig) -> {
     /// Register a user as an early adopter.
     register_early_adopter : (RegisterRequest) ->  (variant { Ok : EarlyAdopterResponse; Err : RegisterError });
     register_event : (RegisterEventRequest) -> (variant { Ok : RegisterEventResponse; Err : RegisterError });
-    list_events : () -> (variant { Ok : ListEventsResponse; Err : RegisterError }) query;
+    list_events : () -> (variant { Ok : ListEventsResponse; Err : RegisterError });
 
     /// Serve the app
     http_request: (request: HttpRequest) -> (HttpResponse) query;

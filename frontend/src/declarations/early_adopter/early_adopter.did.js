@@ -131,7 +131,7 @@ export const idlFactory = ({ IDL }) => {
     'list_events' : IDL.Func(
         [],
         [IDL.Variant({ 'Ok' : ListEventsResponse, 'Err' : RegisterError })],
-        ['query'],
+        [],
       ),
     'prepare_credential' : IDL.Func(
         [PrepareCredentialRequest],
