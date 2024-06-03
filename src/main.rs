@@ -34,7 +34,8 @@ use vc_util::{
 type Memory = RestrictedMemory<DefaultMemoryImpl>;
 type ConfigCell = StableCell<IssuerConfig, Memory>;
 type EarlyAdoptersMap = StableBTreeMap<Principal, EarlyAdopterData, VirtualMemory<Memory>>;
-type EventsMap = StableBTreeMap<String, EventRecord, VirtualMemory<Memory>>;
+type EventName = String;
+type EventsMap = StableBTreeMap<EventName, EventRecord, VirtualMemory<Memory>>;
 
 const EARLY_ADOPTERS_MEMORY_ID: MemoryId = MemoryId::new(0u8);
 const EVENTS_MEMORY_ID: MemoryId = MemoryId::new(1u8);
@@ -53,6 +54,9 @@ const EOY_2024_TIMESTAMP_S: u32 = 1735685999;
 #[derive(CandidType, Clone, Deserialize)]
 struct EventRecord {
     pub created_timestamp_s: u32,
+    // This code can be randomly generated or passed when creating an event.
+    // Users that want to register for an event need to pass the correct code.
+    // The use case is that only users attending an event will learn about the code.
     pub code: String,
 }
 
@@ -535,22 +539,24 @@ async fn is_admin(id: Principal) -> bool {
 #[candid_method]
 async fn list_events() -> Result<ListEventsResponse, RegisterError> {
     let user_id = caller();
-    let is_controller = is_admin(user_id).await;
+    let is_admin = is_admin(user_id).await;
     EVENTS.with_borrow(|events| {
         let events: Vec<EventData> = events
             .iter()
             .map(|(event_name, data)| EventData {
                 created_timestamp_s: data.created_timestamp_s.clone(),
                 event_name: event_name.clone(),
-                code: if is_controller { Some(data.code) } else { None },
+                code: if is_admin { Some(data.code) } else { None },
             })
             .collect();
         Ok(ListEventsResponse { events })
     })
 }
 
-// Returns a random string of length 24
-async fn generate_random_code() -> Option<String> {
+// Returns a random string of length 24 formed of lower case letters.
+// The code will be used to register users in a specific event.
+// See `code` in `EventRecord` for more info.
+async fn generate_randome_event_code() -> Option<String> {
     match raw_rand().await {
         Ok(rand_bytes) => {
             let mut chars: Vec<u8> = vec![];
@@ -593,7 +599,7 @@ async fn register_event(
         let code = match request.code {
             Some(code) => code,
             None => {
-                let Some(code) = generate_random_code().await else {
+                let Some(code) = generate_randome_event_code().await else {
                     return Err(RegisterError::Internal(
                         "There was an error creating the random code. Please try again."
                             .to_string(),
