@@ -35,7 +35,7 @@ jobs:
     - name: Deploy canisters
       run: dfx deploy --no-wallet --network local
     - name: Create Event
-      run: dfx canister call early_adopter register_event '(record { event_name = "TEST"; registration_code = opt "testcode" })'
+      run: dfx canister call early_adopter add_event '(record { event_name = "TEST"; registration_code = opt "testcode" })'
     - name: Run Playwright tests
       working-directory: frontend
       run: PLAYWRIGHT_BASE_URL=http:/$(dfx canister id early_adopter).localhost:$(dfx info webserver-port) npm run test:e2e

@@ -1123,7 +1123,7 @@ fn should_fail_to_register_user_with_empty_event_name() -> Result<(), CallError>
 }
 
 #[test]
-fn only_controllers_can_register_events() -> Result<(), CallError> {
+fn only_controllers_can_add_events() -> Result<(), CallError> {
     let env = env();
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let user = principal_1();
@@ -1145,7 +1145,7 @@ fn only_controllers_can_register_events() -> Result<(), CallError> {
 }
 
 #[test]
-fn should_register_event_with_random_code() -> Result<(), CallError> {
+fn should_add_event_with_random_code() -> Result<(), CallError> {
     let env = env();
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let empty_event = AddEventRequest {
@@ -1166,7 +1166,7 @@ fn should_register_event_with_random_code() -> Result<(), CallError> {
 }
 
 #[test]
-fn should_register_event_with_code() -> Result<(), CallError> {
+fn should_add_event_with_code() -> Result<(), CallError> {
     let env = env();
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let code = "code".to_string();
@@ -1214,7 +1214,7 @@ fn should_not_register_same_event_name_twice() -> Result<(), CallError> {
 }
 
 #[test]
-fn should_register_events() -> Result<(), CallError> {
+fn should_add_events() -> Result<(), CallError> {
     let env = env();
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let event_1 = AddEventRequest {
