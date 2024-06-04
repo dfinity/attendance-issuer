@@ -10,15 +10,15 @@ type CredentialSpec = record {
     arguments : opt vec record { text; ArgumentValue };
 };
 type ArgumentValue = variant { "Int" : int32; String : text };
-type EventData = record {
+type UserEventData = record {
     event_name : text;
     joined_timestamp_s : nat32;
 };
 type EarlyAdopterResponse = record {
     joined_timestamp_s : nat32;
-    events : vec EventData;
+    events : vec UserEventData;
 };
-type EarlyAdopterError = variant {
+type RegisterError = variant {
     Internal : text;
     External : text;
 };
@@ -123,9 +123,35 @@ type HttpResponse = record {
     body: blob;
 };
 
-type RegisterRequest = record {
-    event_name: opt text;
-}
+type RegisterUserEventData = record {
+    event_name: text;
+    registration_code: text;
+};
+
+type RegisterUserRequest = record {
+    event_data: opt RegisterUserEventData;
+};
+
+type AddEventRequest = record {
+    event_name: text;
+    registration_code: opt text;
+};
+
+type AddEventResponse = record {
+    event_name: text;
+    created_timestamp_s: nat32;
+    registration_code: text;
+};
+
+type EventRecord = record {
+    event_name: text;
+    created_timestamp_s: nat32;
+    registration_code: opt text;
+};
+
+type ListEventsResponse = record {
+    events: vec EventRecord;
+};
 
 service: (opt IssuerConfig) -> {
     /// VC-flow API.
@@ -138,7 +164,9 @@ service: (opt IssuerConfig) -> {
     configure: (IssuerConfig) -> ();
 
     /// Register a user as an early adopter.
-    register_early_adopter : (RegisterRequest) ->  (variant { Ok : EarlyAdopterResponse; Err : EarlyAdopterError });
+    register_early_adopter : (RegisterUserRequest) ->  (variant { Ok : EarlyAdopterResponse; Err : RegisterError });
+    add_event : (AddEventRequest) -> (variant { Ok : AddEventResponse; Err : RegisterError });
+    list_events : () -> (variant { Ok : ListEventsResponse; Err : RegisterError });
 
     /// Serve the app
     http_request: (request: HttpRequest) -> (HttpResponse) query;

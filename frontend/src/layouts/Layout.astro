@@ -55,14 +55,15 @@ import socialImage from "../assets/og-image.png";
   import { HttpAgent } from "@dfinity/agent";
   import { initOrbiter, trackEvent as trackEventOrbit } from "@junobuild/analytics";
   import { createActor } from "../utils/actor";
-
-  // TODO: Support multiple events.
-  const CURRENT_HARDCODED_EVENT = "DICE2024";
+  import { getEventFromParams } from "../utils/get-event-from-params";
 
   const SATELLITE_ID = import.meta.env.PUBLIC_JUNO_SATELLITE_ID;
   const ORBITER_ID = import.meta.env.PUBLIC_JUNO_ORBITER_ID;
   const isDev = import.meta.env.DEV;
   const skipAnalytics = isDev || SATELLITE_ID === undefined || ORBITER_ID === undefined;
+
+  const currentEvent = getEventFromParams();
+  const eventName = currentEvent?.eventName ?? "unknown";
 
     /**
    * Initialize Juno Analytics only for production, and only if the required environment variables are set; otherwise, ignore.
@@ -77,7 +78,7 @@ import socialImage from "../assets/og-image.png";
       satelliteId: SATELLITE_ID,
     });
 
-    trackEvent({ name: "page_view", event: CURRENT_HARDCODED_EVENT });
+    trackEvent({ name: "page_view", event: eventName });
   }
 
   initAnalytics();
@@ -145,21 +146,24 @@ import socialImage from "../assets/og-image.png";
       authClient.login({
         onSuccess: async () => {
           try {
-            trackEvent({ name: "login_success", event: CURRENT_HARDCODED_EVENT });
+            trackEvent({ name: "login_success", event: eventName });
             const identity = authClient.getIdentity();
             const agent = new HttpAgent({ identity, host });
             const webapp = await createActor({ canisterId, agent, fetchRootKey});
-            const registerResponse = await webapp.register_early_adopter({ event_name: [CURRENT_HARDCODED_EVENT] });
-            trackEvent({ name: "registration_success", event: CURRENT_HARDCODED_EVENT });
+            // Login button is only present if the query param with a code appears
+            const registerResponse = await webapp.register_early_adopter({ event_data: [{ event_name: eventName, registration_code: currentEvent?.registrationCode ?? "" }] });
             if ("Ok" in registerResponse) {
+              trackEvent({ name: "registration_success", event: eventName });
               resolve({ status: 200, message: 'Logged in successfully!' });
             } else if ("Err" in registerResponse && "Internal" in registerResponse.Err) {
+              trackEvent({ name: "registration_error", event: eventName });
               resolve({ status: 400, message: registerResponse.Err.Internal });
             } else if ("Err" in registerResponse && "External" in registerResponse.Err) {
+              trackEvent({ name: "registration_error", event: eventName });
               resolve({ status: 400, message: registerResponse.Err.External });
             }
           } catch (err: unknown) {
-            trackEvent({ name: "registration_error", event: CURRENT_HARDCODED_EVENT });
+            trackEvent({ name: "registration_error", event: eventName });
             resolve({ status: 400, message: `There was an error while trying to register. ${err}` });
           } finally {
             busyScreen.classList.add('hide');
@@ -168,10 +172,10 @@ import socialImage from "../assets/og-image.png";
         onError: (err) => {
           // Show nothing if the user cancelled the flow.
           if (err !== "UserInterrupt") {
-            trackEvent({ name: "login_error", event: CURRENT_HARDCODED_EVENT });
+            trackEvent({ name: "login_error", event: eventName });
             showErrorToast("The sign-in process was aborted or did not succeed.");
           } else {
-            trackEvent({ name: "login_interrupted", event: CURRENT_HARDCODED_EVENT });
+            trackEvent({ name: "login_interrupted", event: eventName });
           }
           busyScreen.classList.add('hide');
           resolve({ status: 400, message: err });
@@ -590,6 +594,10 @@ import socialImage from "../assets/og-image.png";
     }
   }
 
+  .hidden {
+    display: none;
+  }
+
   .link {
     text-decoration: underline;
   }
@@ -614,10 +622,6 @@ import socialImage from "../assets/og-image.png";
 
   .design-width--tight { 
     max-width: calc(var(--design-max-width) * .35);
-  }
-
-  .border-radius {
-
   }
 
   .header,

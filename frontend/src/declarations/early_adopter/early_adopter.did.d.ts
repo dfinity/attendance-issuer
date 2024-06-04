@@ -1,6 +1,15 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
+export interface AddEventRequest {
+  'registration_code' : [] | [string],
+  'event_name' : string,
+}
+export interface AddEventResponse {
+  'registration_code' : string,
+  'created_timestamp_s' : number,
+  'event_name' : string,
+}
 export type ArgumentValue = { 'Int' : number } |
   { 'String' : string };
 export interface CredentialSpec {
@@ -11,14 +20,13 @@ export interface DerivationOriginData { 'origin' : string }
 export type DerivationOriginError = { 'Internal' : string } |
   { 'UnsupportedOrigin' : string };
 export interface DerivationOriginRequest { 'frontend_hostname' : string }
-export type EarlyAdopterError = { 'Internal' : string } |
-  { 'External' : string };
 export interface EarlyAdopterResponse {
   'joined_timestamp_s' : number,
-  'events' : Array<EventData>,
+  'events' : Array<UserEventData>,
 }
-export interface EventData {
-  'joined_timestamp_s' : number,
+export interface EventRecord {
+  'registration_code' : [] | [string],
+  'created_timestamp_s' : number,
   'event_name' : string,
 }
 export interface GetCredentialRequest {
@@ -67,6 +75,7 @@ export interface IssuerConfig {
   'ic_root_key_der' : Uint8Array | number[],
   'frontend_hostname' : string,
 }
+export interface ListEventsResponse { 'events' : Array<EventRecord> }
 export interface PrepareCredentialRequest {
   'signed_id_alias' : SignedIdAlias,
   'credential_spec' : CredentialSpec,
@@ -74,9 +83,26 @@ export interface PrepareCredentialRequest {
 export interface PreparedCredentialData {
   'prepared_context' : [] | [Uint8Array | number[]],
 }
-export interface RegisterRequest { 'event_name' : [] | [string] }
+export type RegisterError = { 'Internal' : string } |
+  { 'External' : string };
+export interface RegisterUserEventData {
+  'registration_code' : string,
+  'event_name' : string,
+}
+export interface RegisterUserRequest {
+  'event_data' : [] | [RegisterUserEventData],
+}
 export interface SignedIdAlias { 'credential_jws' : string }
+export interface UserEventData {
+  'joined_timestamp_s' : number,
+  'event_name' : string,
+}
 export interface _SERVICE {
+  'add_event' : ActorMethod<
+    [AddEventRequest],
+    { 'Ok' : AddEventResponse } |
+      { 'Err' : RegisterError }
+  >,
   'configure' : ActorMethod<[IssuerConfig], undefined>,
   'derivation_origin' : ActorMethod<
     [DerivationOriginRequest],
@@ -89,15 +115,20 @@ export interface _SERVICE {
       { 'Err' : IssueCredentialError }
   >,
   'http_request' : ActorMethod<[HttpRequest], HttpResponse>,
+  'list_events' : ActorMethod<
+    [],
+    { 'Ok' : ListEventsResponse } |
+      { 'Err' : RegisterError }
+  >,
   'prepare_credential' : ActorMethod<
     [PrepareCredentialRequest],
     { 'Ok' : PreparedCredentialData } |
       { 'Err' : IssueCredentialError }
   >,
   'register_early_adopter' : ActorMethod<
-    [RegisterRequest],
+    [RegisterUserRequest],
     { 'Ok' : EarlyAdopterResponse } |
-      { 'Err' : EarlyAdopterError }
+      { 'Err' : RegisterError }
   >,
   'vc_consent_message' : ActorMethod<
     [Icrc21VcConsentMessageRequest],

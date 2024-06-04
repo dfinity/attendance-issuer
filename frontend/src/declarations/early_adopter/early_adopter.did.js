@@ -5,6 +5,19 @@ export const idlFactory = ({ IDL }) => {
     'ic_root_key_der' : IDL.Vec(IDL.Nat8),
     'frontend_hostname' : IDL.Text,
   });
+  const AddEventRequest = IDL.Record({
+    'registration_code' : IDL.Opt(IDL.Text),
+    'event_name' : IDL.Text,
+  });
+  const AddEventResponse = IDL.Record({
+    'registration_code' : IDL.Text,
+    'created_timestamp_s' : IDL.Nat32,
+    'event_name' : IDL.Text,
+  });
+  const RegisterError = IDL.Variant({
+    'Internal' : IDL.Text,
+    'External' : IDL.Text,
+  });
   const DerivationOriginRequest = IDL.Record({
     'frontend_hostname' : IDL.Text,
   });
@@ -46,6 +59,12 @@ export const idlFactory = ({ IDL }) => {
     'headers' : IDL.Vec(HeaderField),
     'status_code' : IDL.Nat16,
   });
+  const EventRecord = IDL.Record({
+    'registration_code' : IDL.Opt(IDL.Text),
+    'created_timestamp_s' : IDL.Nat32,
+    'event_name' : IDL.Text,
+  });
+  const ListEventsResponse = IDL.Record({ 'events' : IDL.Vec(EventRecord) });
   const PrepareCredentialRequest = IDL.Record({
     'signed_id_alias' : SignedIdAlias,
     'credential_spec' : CredentialSpec,
@@ -53,18 +72,20 @@ export const idlFactory = ({ IDL }) => {
   const PreparedCredentialData = IDL.Record({
     'prepared_context' : IDL.Opt(IDL.Vec(IDL.Nat8)),
   });
-  const RegisterRequest = IDL.Record({ 'event_name' : IDL.Opt(IDL.Text) });
-  const EventData = IDL.Record({
+  const RegisterUserEventData = IDL.Record({
+    'registration_code' : IDL.Text,
+    'event_name' : IDL.Text,
+  });
+  const RegisterUserRequest = IDL.Record({
+    'event_data' : IDL.Opt(RegisterUserEventData),
+  });
+  const UserEventData = IDL.Record({
     'joined_timestamp_s' : IDL.Nat32,
     'event_name' : IDL.Text,
   });
   const EarlyAdopterResponse = IDL.Record({
     'joined_timestamp_s' : IDL.Nat32,
-    'events' : IDL.Vec(EventData),
-  });
-  const EarlyAdopterError = IDL.Variant({
-    'Internal' : IDL.Text,
-    'External' : IDL.Text,
+    'events' : IDL.Vec(UserEventData),
   });
   const Icrc21ConsentPreferences = IDL.Record({ 'language' : IDL.Text });
   const Icrc21VcConsentMessageRequest = IDL.Record({
@@ -85,6 +106,11 @@ export const idlFactory = ({ IDL }) => {
     'ConsentMessageUnavailable' : Icrc21ErrorInfo,
   });
   return IDL.Service({
+    'add_event' : IDL.Func(
+        [AddEventRequest],
+        [IDL.Variant({ 'Ok' : AddEventResponse, 'Err' : RegisterError })],
+        [],
+      ),
     'configure' : IDL.Func([IssuerConfig], [], []),
     'derivation_origin' : IDL.Func(
         [DerivationOriginRequest],
@@ -107,6 +133,11 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'http_request' : IDL.Func([HttpRequest], [HttpResponse], ['query']),
+    'list_events' : IDL.Func(
+        [],
+        [IDL.Variant({ 'Ok' : ListEventsResponse, 'Err' : RegisterError })],
+        [],
+      ),
     'prepare_credential' : IDL.Func(
         [PrepareCredentialRequest],
         [
@@ -118,13 +149,8 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'register_early_adopter' : IDL.Func(
-        [RegisterRequest],
-        [
-          IDL.Variant({
-            'Ok' : EarlyAdopterResponse,
-            'Err' : EarlyAdopterError,
-          }),
-        ],
+        [RegisterUserRequest],
+        [IDL.Variant({ 'Ok' : EarlyAdopterResponse, 'Err' : RegisterError })],
         [],
       ),
     'vc_consent_message' : IDL.Func(

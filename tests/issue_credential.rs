@@ -12,7 +12,7 @@ use canister_tests::framework::{
 use ic_cdk::api::management_canister::provisional::CanisterId;
 use ic_response_verification::types::VerificationInfo;
 use ic_response_verification::verify_request_response_pair;
-use ic_test_state_machine_client::{call_candid, call_candid_as};
+use ic_test_state_machine_client::{call_candid, call_candid_as, CanisterSettings};
 use ic_test_state_machine_client::{query_candid_as, CallError, StateMachine};
 use internet_identity_interface::http_gateway::{HttpRequest, HttpResponse};
 use internet_identity_interface::internet_identity::types::vc_mvp::{
@@ -113,6 +113,13 @@ impl Default for IssuerInit {
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct EventData {
+    pub event_name: String,
+    pub registration_code: Option<String>,
+    pub created_timestamp_s: u32,
+}
+
+#[derive(CandidType, Clone, Deserialize, Debug)]
+pub struct UserEventData {
     pub joined_timestamp_s: u32,
     pub event_name: String,
 }
@@ -120,12 +127,36 @@ pub struct EventData {
 #[derive(CandidType, Deserialize, Debug)]
 pub struct EarlyAdopterResponse {
     pub joined_timestamp_s: u32,
-    pub events: Vec<EventData>,
+    pub events: Vec<UserEventData>,
 }
 
 #[derive(CandidType, Deserialize)]
-pub struct RegisterRequest {
-    pub event_name: Option<String>,
+pub struct ListEventsResponse {
+    pub events: Vec<EventData>,
+}
+
+#[derive(CandidType, Clone, Deserialize)]
+pub struct RegisterUserEventData {
+    pub event_name: String,
+    pub registration_code: String,
+}
+
+#[derive(CandidType, Clone, Deserialize)]
+pub struct RegisterUserRequest {
+    pub event_data: Option<RegisterUserEventData>,
+}
+
+#[derive(CandidType, Deserialize, Debug)]
+pub struct AddEventResponse {
+    pub event_name: String,
+    pub registration_code: String,
+    pub created_timestamp_s: u32,
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct AddEventRequest {
+    pub event_name: String,
+    pub registration_code: Option<String>,
 }
 
 #[derive(CandidType, Debug, Deserialize)]
@@ -134,10 +165,26 @@ pub enum EarlyAdopterError {
     External(String),
 }
 
+fn controller() -> Principal {
+    Principal::self_authenticating("controller")
+}
+
 pub fn install_issuer(env: &StateMachine, init: &IssuerInit) -> CanisterId {
-    let canister_id = env.create_canister(None);
+    let canister_controller = controller();
+    let settings = CanisterSettings {
+        controllers: Some(vec![canister_controller]),
+        compute_allocation: None,
+        memory_allocation: None,
+        freezing_threshold: None,
+    };
+    let canister_id = env.create_canister_with_settings(Some(settings), Some(canister_controller));
     let arg = candid::encode_one(Some(init)).expect("error encoding II installation arg as candid");
-    env.install_canister(canister_id, EARLY_ADOPTER_ISSUER_WASM.clone(), arg, None);
+    env.install_canister(
+        canister_id,
+        EARLY_ADOPTER_ISSUER_WASM.clone(),
+        arg,
+        Some(canister_controller),
+    );
     canister_id
 }
 
@@ -184,11 +231,28 @@ mod api {
         .map(|(x,)| x)
     }
 
+    pub fn add_event(
+        env: &StateMachine,
+        canister_id: CanisterId,
+        sender: Principal,
+        request: &AddEventRequest,
+    ) -> Result<Result<AddEventResponse, EarlyAdopterError>, CallError> {
+        call_candid_as(env, canister_id, sender, "add_event", (request,)).map(|(x,)| x)
+    }
+
+    pub fn list_events(
+        env: &StateMachine,
+        canister_id: CanisterId,
+        sender: Principal,
+    ) -> Result<Result<ListEventsResponse, EarlyAdopterError>, CallError> {
+        call_candid_as(env, canister_id, sender, "list_events", ()).map(|(x,)| x)
+    }
+
     pub fn register_early_adopter(
         env: &StateMachine,
         canister_id: CanisterId,
         sender: Principal,
-        request: &RegisterRequest,
+        request: &RegisterUserRequest,
     ) -> Result<Result<EarlyAdopterResponse, EarlyAdopterError>, CallError> {
         call_candid_as(
             env,
@@ -236,7 +300,7 @@ mod api {
 #[test]
 fn should_get_vc_consent_message_for_eary_adopter() {
     let env = env();
-    let canister_id = install_canister(&env, EARLY_ADOPTER_ISSUER_WASM.clone());
+    let canister_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
 
     let consent_message_request = Icrc21VcConsentMessageRequest {
         credential_spec: early_adopter_credential_spec(),
@@ -257,7 +321,7 @@ fn should_get_vc_consent_message_for_eary_adopter() {
 #[test]
 fn should_get_vc_consent_message_for_event_attendance() {
     let env = env();
-    let canister_id = install_canister(&env, EARLY_ADOPTER_ISSUER_WASM.clone());
+    let canister_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
 
     let event_name = "DICE2024".to_string();
     let consent_message_request = Icrc21VcConsentMessageRequest {
@@ -279,7 +343,7 @@ fn should_get_vc_consent_message_for_event_attendance() {
 #[test]
 fn should_fail_vc_consent_message_if_not_supported() {
     let env = env();
-    let canister_id = install_canister(&env, EARLY_ADOPTER_ISSUER_WASM.clone());
+    let canister_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
 
     let consent_message_request = Icrc21VcConsentMessageRequest {
         credential_spec: CredentialSpec {
@@ -300,7 +364,7 @@ fn should_fail_vc_consent_message_if_not_supported() {
 #[test]
 fn should_fail_early_adopter_vc_consent_message_if_missing_arguments() {
     let env = env();
-    let canister_id = install_canister(&env, EARLY_ADOPTER_ISSUER_WASM.clone());
+    let canister_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
 
     let consent_message_request = Icrc21VcConsentMessageRequest {
         credential_spec: CredentialSpec {
@@ -321,7 +385,7 @@ fn should_fail_early_adopter_vc_consent_message_if_missing_arguments() {
 #[test]
 fn should_fail_event_attendance_vc_consent_message_if_missing_arguments() {
     let env = env();
-    let canister_id = install_canister(&env, EARLY_ADOPTER_ISSUER_WASM.clone());
+    let canister_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
 
     let consent_message_request = Icrc21VcConsentMessageRequest {
         credential_spec: CredentialSpec {
@@ -342,7 +406,7 @@ fn should_fail_event_attendance_vc_consent_message_if_missing_arguments() {
 #[test]
 fn should_fail_early_adopter_vc_consent_message_if_missing_required_argument() {
     let env = env();
-    let canister_id = install_canister(&env, EARLY_ADOPTER_ISSUER_WASM.clone());
+    let canister_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
 
     let mut args = HashMap::new();
     args.insert("wrongArgument".to_string(), ArgumentValue::Int(42));
@@ -366,7 +430,7 @@ fn should_fail_early_adopter_vc_consent_message_if_missing_required_argument() {
 #[test]
 fn should_fail_event_attendance_vc_consent_message_if_missing_required_argument() {
     let env = env();
-    let canister_id = install_canister(&env, EARLY_ADOPTER_ISSUER_WASM.clone());
+    let canister_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
 
     let mut args = HashMap::new();
     args.insert("wrongArgument".to_string(), ArgumentValue::Int(42));
@@ -388,15 +452,16 @@ fn should_fail_event_attendance_vc_consent_message_if_missing_required_argument(
 }
 
 #[test]
-fn should_return_derivation_origin() {
+fn should_not_return_derivation_origin_if_not_in_config() {
     let env = env();
-    let canister_id = install_canister(&env, EARLY_ADOPTER_ISSUER_WASM.clone());
+    let canister_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let frontend_hostname = format!("https://{}.icp0.io", canister_id.to_text());
     let req = DerivationOriginRequest { frontend_hostname };
-    let response = api::derivation_origin(&env, canister_id, principal_1(), &req)
-        .expect("API call failed")
-        .expect("derivation_origin error");
-    assert_eq!(response.origin, req.frontend_hostname);
+    match api::derivation_origin(&env, canister_id, principal_1(), &req).unwrap() {
+        Ok(_) => assert!(false),
+        Err(DerivationOriginError::UnsupportedOrigin(_)) => assert!(true),
+        Err(_) => assert!(false),
+    }
 }
 
 #[test]
@@ -425,7 +490,7 @@ fn should_return_derivation_origin_with_custom_init() {
 #[test]
 fn should_fail_derivation_origin_if_unsupported_origin() {
     let env = env();
-    let canister_id = install_canister(&env, EARLY_ADOPTER_ISSUER_WASM.clone());
+    let canister_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let req = DerivationOriginRequest {
         frontend_hostname: "https://wrong.fe.host".to_string(),
     };
@@ -501,7 +566,7 @@ fn should_fail_get_credential_for_wrong_sender() {
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let signed_id_alias = DUMMY_SIGNED_ID_ALIAS.clone();
     let authorized_principal = Principal::from_text(DUMMY_ALIAS_ID_DAPP_PRINCIPAL).unwrap();
-    let request = RegisterRequest { event_name: None };
+    let request = RegisterUserRequest { event_data: None };
     let _ = api::register_early_adopter(&env, issuer_id, authorized_principal, &request).unwrap();
     let unauthorized_principal = test_principal(2);
 
@@ -603,7 +668,7 @@ fn should_prepare_early_adopter_credential_for_authorized_principal() {
     let env = env();
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let authorized_principal = Principal::from_text(DUMMY_ALIAS_ID_DAPP_PRINCIPAL).unwrap();
-    let request = RegisterRequest { event_name: None };
+    let request = RegisterUserRequest { event_data: None };
     let _ = api::register_early_adopter(&env, issuer_id, authorized_principal, &request).unwrap();
     let response = api::prepare_credential(
         &env,
@@ -624,9 +689,19 @@ fn should_fail_to_prepare_event_attendance_credential_for_non_attendees() {
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let authorized_principal = Principal::from_text(DUMMY_ALIAS_ID_DAPP_PRINCIPAL).unwrap();
     let attended_event = "DICE2024".to_string();
+    let attended_event_code = "code".to_string();
     let not_attended_event = "Denver2025".to_string();
-    let request = RegisterRequest {
-        event_name: Some(attended_event.clone()),
+    let event_request = AddEventRequest {
+        event_name: attended_event.clone(),
+        registration_code: Some(attended_event_code.clone()),
+    };
+    let _ = api::add_event(&env, issuer_id, controller(), &event_request).unwrap();
+    let event_data = RegisterUserEventData {
+        event_name: attended_event.clone(),
+        registration_code: attended_event_code.clone(),
+    };
+    let request = RegisterUserRequest {
+        event_data: Some(event_data),
     };
     let status_user = api::register_early_adopter(&env, issuer_id, authorized_principal, &request)
         .unwrap()
@@ -651,8 +726,18 @@ fn should_prepare_event_attendance_credential_for_attendees() {
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let authorized_principal = Principal::from_text(DUMMY_ALIAS_ID_DAPP_PRINCIPAL).unwrap();
     let event_name = "DICE2024".to_string();
-    let request = RegisterRequest {
-        event_name: Some(event_name.clone()),
+    let event_code = "code".to_string();
+    let event_request = AddEventRequest {
+        event_name: event_name.clone(),
+        registration_code: Some(event_code.clone()),
+    };
+    let _ = api::add_event(&env, issuer_id, controller(), &event_request).unwrap();
+    let event_data = RegisterUserEventData {
+        event_name: event_name.clone(),
+        registration_code: event_code.clone(),
+    };
+    let request = RegisterUserRequest {
+        event_data: Some(event_data),
     };
     let status_user = api::register_early_adopter(&env, issuer_id, authorized_principal, &request)
         .unwrap()
@@ -726,8 +811,18 @@ fn should_issue_credential_e2e() -> Result<(), CallError> {
     .expect("Invalid ID alias");
 
     let event_name = "DICE2024".to_string();
-    let request = RegisterRequest {
-        event_name: Some(event_name.clone()),
+    let event_code = "code".to_string();
+    let event_request = AddEventRequest {
+        event_name: event_name.clone(),
+        registration_code: Some(event_code.clone()),
+    };
+    let _ = api::add_event(&env, issuer_id, controller(), &event_request).unwrap();
+    let event_data = RegisterUserEventData {
+        event_name: event_name.clone(),
+        registration_code: event_code.clone(),
+    };
+    let request = RegisterUserRequest {
+        event_data: Some(event_data),
     };
     let _ = api::register_early_adopter(&env, issuer_id, alias_tuple.id_dapp, &request)?;
 
@@ -784,7 +879,7 @@ fn should_issue_credential_e2e() -> Result<(), CallError> {
 #[test]
 fn should_configure() {
     let env = env();
-    let issuer_id = install_canister(&env, EARLY_ADOPTER_ISSUER_WASM.clone());
+    let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     api::configure(&env, issuer_id, &DUMMY_ISSUER_INIT).expect("API call failed");
 }
 
@@ -821,7 +916,7 @@ fn issuer_canister_serves_http_assets() -> Result<(), CallError> {
     }
 
     let env = env();
-    let canister_id = install_canister(&env, EARLY_ADOPTER_ISSUER_WASM.clone());
+    let canister_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
 
     // for each asset and certification version, fetch the asset, check the HTTP status code, headers and certificate.
 
@@ -882,7 +977,7 @@ fn issuer_canister_serves_metrics_endpoint() -> Result<(), CallError> {
 
     let env = env();
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
-    let request = RegisterRequest { event_name: None };
+    let request = RegisterUserRequest { event_data: None };
 
     assert_metrics(&env, issuer_id, "early_adopters 0")?;
 
@@ -909,7 +1004,7 @@ fn should_not_overwrite_the_first_registration() -> Result<(), CallError> {
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let user_a = principal_1();
     let user_b = principal_2();
-    let request = RegisterRequest { event_name: None };
+    let request = RegisterUserRequest { event_data: None };
 
     // Register two users at differen time, they should have different timestamps
     let status_1_user_a = api::register_early_adopter(&env, issuer_id, user_a, &request)?
@@ -955,22 +1050,44 @@ fn should_add_events_to_registered_user() -> Result<(), CallError> {
     let env = env();
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let user = principal_1();
-    let event_data_a = RegisterRequest {
-        event_name: Some("event A".to_string()),
+    let event_name_a = "event A".to_string();
+    let event_code_a = "code A".to_string();
+    let event_name_b = "event B".to_string();
+    let event_code_b = "code A".to_string();
+    let event_data_a = RegisterUserEventData {
+        event_name: event_name_a.clone(),
+        registration_code: event_code_a.clone(),
     };
-    let event_data_b = RegisterRequest {
-        event_name: Some("event B".to_string()),
+    let event_data_b = RegisterUserEventData {
+        event_name: event_name_b.clone(),
+        registration_code: event_code_b.clone(),
     };
+    let event_request_a = AddEventRequest {
+        event_name: event_name_a.clone(),
+        registration_code: Some(event_code_a.clone()),
+    };
+    let _ = api::add_event(&env, issuer_id, controller(), &event_request_a).unwrap();
+    let event_request_b = AddEventRequest {
+        event_name: event_name_b.clone(),
+        registration_code: Some(event_code_b.clone()),
+    };
+    let _ = api::add_event(&env, issuer_id, controller(), &event_request_b).unwrap();
 
+    let request_a = RegisterUserRequest {
+        event_data: Some(event_data_a),
+    };
+    let request_b = RegisterUserRequest {
+        event_data: Some(event_data_b),
+    };
     // Register with event_a
-    let status_1_user_a = api::register_early_adopter(&env, issuer_id, user, &event_data_a)?
+    let status_1_user_a = api::register_early_adopter(&env, issuer_id, user, &request_a)?
         .expect("Failed registering user a");
     assert_eq!(status_1_user_a.events.len(), 1);
 
     env.advance_time(std::time::Duration::from_secs(2));
 
     // Re-register user a with event_b adds event but doesn't change timestamp
-    let status_2_user_a = api::register_early_adopter(&env, issuer_id, user, &event_data_b)?
+    let status_2_user_a = api::register_early_adopter(&env, issuer_id, user, &request_b)?
         .expect("Failed getting status for user a");
     assert_eq!(
         status_1_user_a.joined_timestamp_s,
@@ -986,8 +1103,12 @@ fn should_fail_to_register_user_with_empty_event_name() -> Result<(), CallError>
     let env = env();
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let user = principal_1();
-    let empty_event = RegisterRequest {
-        event_name: Some("".to_string()),
+    let event_data = RegisterUserEventData {
+        event_name: "".to_string(),
+        registration_code: "".to_string(),
+    };
+    let empty_event = RegisterUserRequest {
+        event_data: Some(event_data),
     };
 
     let status_1_user =
@@ -1002,11 +1123,136 @@ fn should_fail_to_register_user_with_empty_event_name() -> Result<(), CallError>
 }
 
 #[test]
+fn only_controllers_can_add_events() -> Result<(), CallError> {
+    let env = env();
+    let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
+    let user = principal_1();
+    let empty_event = AddEventRequest {
+        event_name: "Test".to_string(),
+        registration_code: None,
+    };
+
+    let response = api::add_event(&env, issuer_id, user, &empty_event)?.unwrap_err();
+
+    match response {
+        EarlyAdopterError::External(msg) => {
+            assert!(msg.contains("Only controllers can register events"))
+        }
+        _ => assert!(false),
+    }
+
+    Ok(())
+}
+
+#[test]
+fn should_add_event_with_random_code() -> Result<(), CallError> {
+    let env = env();
+    let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
+    let empty_event = AddEventRequest {
+        event_name: "Test".to_string(),
+        registration_code: None,
+    };
+
+    api::add_event(&env, issuer_id, controller(), &empty_event)?
+        .expect("API call to register event failed");
+
+    let events_response =
+        api::list_events(&env, issuer_id, controller())?.expect("API to list events failed");
+
+    assert!(events_response.events.len() == 1);
+    assert_matches!(events_response.events[0].registration_code, Some(_));
+
+    Ok(())
+}
+
+#[test]
+fn should_add_event_with_code() -> Result<(), CallError> {
+    let env = env();
+    let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
+    let code = "code".to_string();
+    let empty_event = AddEventRequest {
+        event_name: "Test".to_string(),
+        registration_code: Some(code.clone()),
+    };
+
+    api::add_event(&env, issuer_id, controller(), &empty_event)?.expect("API call failed");
+
+    let events_response =
+        api::list_events(&env, issuer_id, controller())?.expect("API to list events failed");
+
+    assert!(events_response.events.len() == 1);
+    assert_eq!(
+        events_response.events[0].registration_code.clone().unwrap(),
+        code
+    );
+
+    Ok(())
+}
+
+#[test]
+fn should_not_register_same_event_name_twice() -> Result<(), CallError> {
+    let env = env();
+    let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
+    let code = "code".to_string();
+    let empty_event = AddEventRequest {
+        event_name: "Test".to_string(),
+        registration_code: Some(code.clone()),
+    };
+
+    api::add_event(&env, issuer_id, controller(), &empty_event)?.expect("API call failed");
+    let register_response =
+        api::add_event(&env, issuer_id, controller(), &empty_event)?.unwrap_err();
+
+    match register_response {
+        EarlyAdopterError::External(msg) => {
+            assert!(msg.contains("already exists"))
+        }
+        _ => assert!(false),
+    }
+
+    Ok(())
+}
+
+#[test]
+fn should_add_events() -> Result<(), CallError> {
+    let env = env();
+    let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
+    let event_1 = AddEventRequest {
+        event_name: "Test 1".to_string(),
+        registration_code: None,
+    };
+    let event_2 = AddEventRequest {
+        event_name: "Test 2".to_string(),
+        registration_code: None,
+    };
+    let event_3 = AddEventRequest {
+        event_name: "Test 3".to_string(),
+        registration_code: None,
+    };
+
+    api::add_event(&env, issuer_id, controller(), &event_1)?.expect("API call failed");
+    api::add_event(&env, issuer_id, controller(), &event_2)?.expect("API call failed");
+    api::add_event(&env, issuer_id, controller(), &event_3)?.expect("API call failed");
+
+    let events_response =
+        api::list_events(&env, issuer_id, controller())?.expect("API to list events failed");
+
+    assert!(events_response.events.len() == 3);
+
+    Ok(())
+}
+
+#[test]
 fn should_upgrade_issuer() -> Result<(), CallError> {
     let env = env();
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let arg = candid::encode_one("()").expect("error encoding issuer init arg as candid");
-    env.upgrade_canister(issuer_id, EARLY_ADOPTER_ISSUER_WASM.clone(), arg, None)?;
+    env.upgrade_canister(
+        issuer_id,
+        EARLY_ADOPTER_ISSUER_WASM.clone(),
+        arg,
+        Some(controller()),
+    )?;
 
     // Verify the canister is still running.
     let consent_message_request = Icrc21VcConsentMessageRequest {
@@ -1025,11 +1271,16 @@ fn should_upgrade_issuer() -> Result<(), CallError> {
 fn should_retain_adopters_after_upgrade() -> Result<(), CallError> {
     let env = env();
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
-    let request = RegisterRequest { event_name: None };
+    let request = RegisterUserRequest { event_data: None };
     let status_before = api::register_early_adopter(&env, issuer_id, principal_1(), &request)?
         .expect("Failed registering");
     let arg = candid::encode_one("()").expect("error encoding issuer init arg as candid");
-    env.upgrade_canister(issuer_id, EARLY_ADOPTER_ISSUER_WASM.clone(), arg, None)?;
+    env.upgrade_canister(
+        issuer_id,
+        EARLY_ADOPTER_ISSUER_WASM.clone(),
+        arg,
+        Some(controller()),
+    )?;
     env.advance_time(std::time::Duration::from_secs(2));
     let status_for_new_user =
         api::register_early_adopter(&env, issuer_id, principal_2(), &request)?
