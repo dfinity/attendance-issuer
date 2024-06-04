@@ -673,7 +673,7 @@ fn register_early_adopter(
         // Exit early if the passed code doesn't match the event code
         if event_record.registration_code != requested_event.registration_code {
             return Err(RegisterError::Internal(format!(
-                "Code doesn't match for Event {}",
+                "Registration code doesn't match for Event {}",
                 requested_event.event_name
             )));
         }
