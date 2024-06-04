@@ -8,7 +8,7 @@ An implementation of a Verified Credentials issuer for "EventAttendance" credent
 
 Before building the wasm you need to specify the environment variables of the context you are building.
 
-There is a script that reads the canister ids and local replica to create the env vars: `DFX_NETWORK=local ./scripts/create-env-vars.sh`.
+There is a script within the `frontend` directory that reads the canister ids and local replica to create the env vars: `DFX_NETWORK=local ./scripts/create-env-vars.sh`.
 
 The `DFX_NETWORK=local` is needed to get the canister ids from the dfx replica.
 
