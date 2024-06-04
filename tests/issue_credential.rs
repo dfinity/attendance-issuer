@@ -114,7 +114,7 @@ impl Default for IssuerInit {
 #[derive(CandidType, Deserialize, Debug)]
 pub struct EventData {
     pub event_name: String,
-    pub code: Option<String>,
+    pub registration_code: Option<String>,
     pub created_timestamp_s: u32,
 }
 
@@ -136,27 +136,27 @@ pub struct ListEventsResponse {
 }
 
 #[derive(CandidType, Clone, Deserialize)]
-pub struct RegisterEventData {
+pub struct RegisterUserEventData {
     pub event_name: String,
-    pub code: String,
+    pub registration_code: String,
 }
 
 #[derive(CandidType, Clone, Deserialize)]
-pub struct RegisterRequest {
-    pub event_data: Option<RegisterEventData>,
+pub struct RegisterUserRequest {
+    pub event_data: Option<RegisterUserEventData>,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
-pub struct RegisterEventResponse {
+pub struct AddEventResponse {
     pub event_name: String,
-    pub code: String,
+    pub registration_code: String,
     pub created_timestamp_s: u32,
 }
 
 #[derive(CandidType, Deserialize)]
-pub struct RegisterEventRequest {
+pub struct AddEventRequest {
     pub event_name: String,
-    pub code: Option<String>,
+    pub registration_code: Option<String>,
 }
 
 #[derive(CandidType, Debug, Deserialize)]
@@ -231,13 +231,13 @@ mod api {
         .map(|(x,)| x)
     }
 
-    pub fn register_event(
+    pub fn add_event(
         env: &StateMachine,
         canister_id: CanisterId,
         sender: Principal,
-        request: &RegisterEventRequest,
-    ) -> Result<Result<RegisterEventResponse, EarlyAdopterError>, CallError> {
-        call_candid_as(env, canister_id, sender, "register_event", (request,)).map(|(x,)| x)
+        request: &AddEventRequest,
+    ) -> Result<Result<AddEventResponse, EarlyAdopterError>, CallError> {
+        call_candid_as(env, canister_id, sender, "add_event", (request,)).map(|(x,)| x)
     }
 
     pub fn list_events(
@@ -252,7 +252,7 @@ mod api {
         env: &StateMachine,
         canister_id: CanisterId,
         sender: Principal,
-        request: &RegisterRequest,
+        request: &RegisterUserRequest,
     ) -> Result<Result<EarlyAdopterResponse, EarlyAdopterError>, CallError> {
         call_candid_as(
             env,
@@ -566,7 +566,7 @@ fn should_fail_get_credential_for_wrong_sender() {
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let signed_id_alias = DUMMY_SIGNED_ID_ALIAS.clone();
     let authorized_principal = Principal::from_text(DUMMY_ALIAS_ID_DAPP_PRINCIPAL).unwrap();
-    let request = RegisterRequest { event_data: None };
+    let request = RegisterUserRequest { event_data: None };
     let _ = api::register_early_adopter(&env, issuer_id, authorized_principal, &request).unwrap();
     let unauthorized_principal = test_principal(2);
 
@@ -668,7 +668,7 @@ fn should_prepare_early_adopter_credential_for_authorized_principal() {
     let env = env();
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let authorized_principal = Principal::from_text(DUMMY_ALIAS_ID_DAPP_PRINCIPAL).unwrap();
-    let request = RegisterRequest { event_data: None };
+    let request = RegisterUserRequest { event_data: None };
     let _ = api::register_early_adopter(&env, issuer_id, authorized_principal, &request).unwrap();
     let response = api::prepare_credential(
         &env,
@@ -691,16 +691,16 @@ fn should_fail_to_prepare_event_attendance_credential_for_non_attendees() {
     let attended_event = "DICE2024".to_string();
     let attended_event_code = "code".to_string();
     let not_attended_event = "Denver2025".to_string();
-    let event_request = RegisterEventRequest {
+    let event_request = AddEventRequest {
         event_name: attended_event.clone(),
-        code: Some(attended_event_code.clone()),
+        registration_code: Some(attended_event_code.clone()),
     };
-    let _ = api::register_event(&env, issuer_id, controller(), &event_request).unwrap();
-    let event_data = RegisterEventData {
+    let _ = api::add_event(&env, issuer_id, controller(), &event_request).unwrap();
+    let event_data = RegisterUserEventData {
         event_name: attended_event.clone(),
-        code: attended_event_code.clone(),
+        registration_code: attended_event_code.clone(),
     };
-    let request = RegisterRequest {
+    let request = RegisterUserRequest {
         event_data: Some(event_data),
     };
     let status_user = api::register_early_adopter(&env, issuer_id, authorized_principal, &request)
@@ -727,16 +727,16 @@ fn should_prepare_event_attendance_credential_for_attendees() {
     let authorized_principal = Principal::from_text(DUMMY_ALIAS_ID_DAPP_PRINCIPAL).unwrap();
     let event_name = "DICE2024".to_string();
     let event_code = "code".to_string();
-    let event_request = RegisterEventRequest {
+    let event_request = AddEventRequest {
         event_name: event_name.clone(),
-        code: Some(event_code.clone()),
+        registration_code: Some(event_code.clone()),
     };
-    let _ = api::register_event(&env, issuer_id, controller(), &event_request).unwrap();
-    let event_data = RegisterEventData {
+    let _ = api::add_event(&env, issuer_id, controller(), &event_request).unwrap();
+    let event_data = RegisterUserEventData {
         event_name: event_name.clone(),
-        code: event_code.clone(),
+        registration_code: event_code.clone(),
     };
-    let request = RegisterRequest {
+    let request = RegisterUserRequest {
         event_data: Some(event_data),
     };
     let status_user = api::register_early_adopter(&env, issuer_id, authorized_principal, &request)
@@ -812,16 +812,16 @@ fn should_issue_credential_e2e() -> Result<(), CallError> {
 
     let event_name = "DICE2024".to_string();
     let event_code = "code".to_string();
-    let event_request = RegisterEventRequest {
+    let event_request = AddEventRequest {
         event_name: event_name.clone(),
-        code: Some(event_code.clone()),
+        registration_code: Some(event_code.clone()),
     };
-    let _ = api::register_event(&env, issuer_id, controller(), &event_request).unwrap();
-    let event_data = RegisterEventData {
+    let _ = api::add_event(&env, issuer_id, controller(), &event_request).unwrap();
+    let event_data = RegisterUserEventData {
         event_name: event_name.clone(),
-        code: event_code.clone(),
+        registration_code: event_code.clone(),
     };
-    let request = RegisterRequest {
+    let request = RegisterUserRequest {
         event_data: Some(event_data),
     };
     let _ = api::register_early_adopter(&env, issuer_id, alias_tuple.id_dapp, &request)?;
@@ -977,7 +977,7 @@ fn issuer_canister_serves_metrics_endpoint() -> Result<(), CallError> {
 
     let env = env();
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
-    let request = RegisterRequest { event_data: None };
+    let request = RegisterUserRequest { event_data: None };
 
     assert_metrics(&env, issuer_id, "early_adopters 0")?;
 
@@ -1004,7 +1004,7 @@ fn should_not_overwrite_the_first_registration() -> Result<(), CallError> {
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let user_a = principal_1();
     let user_b = principal_2();
-    let request = RegisterRequest { event_data: None };
+    let request = RegisterUserRequest { event_data: None };
 
     // Register two users at differen time, they should have different timestamps
     let status_1_user_a = api::register_early_adopter(&env, issuer_id, user_a, &request)?
@@ -1054,29 +1054,29 @@ fn should_add_events_to_registered_user() -> Result<(), CallError> {
     let event_code_a = "code A".to_string();
     let event_name_b = "event B".to_string();
     let event_code_b = "code A".to_string();
-    let event_data_a = RegisterEventData {
+    let event_data_a = RegisterUserEventData {
         event_name: event_name_a.clone(),
-        code: event_code_a.clone(),
+        registration_code: event_code_a.clone(),
     };
-    let event_data_b = RegisterEventData {
+    let event_data_b = RegisterUserEventData {
         event_name: event_name_b.clone(),
-        code: event_code_b.clone(),
+        registration_code: event_code_b.clone(),
     };
-    let event_request_a = RegisterEventRequest {
+    let event_request_a = AddEventRequest {
         event_name: event_name_a.clone(),
-        code: Some(event_code_a.clone()),
+        registration_code: Some(event_code_a.clone()),
     };
-    let _ = api::register_event(&env, issuer_id, controller(), &event_request_a).unwrap();
-    let event_request_b = RegisterEventRequest {
+    let _ = api::add_event(&env, issuer_id, controller(), &event_request_a).unwrap();
+    let event_request_b = AddEventRequest {
         event_name: event_name_b.clone(),
-        code: Some(event_code_b.clone()),
+        registration_code: Some(event_code_b.clone()),
     };
-    let _ = api::register_event(&env, issuer_id, controller(), &event_request_b).unwrap();
+    let _ = api::add_event(&env, issuer_id, controller(), &event_request_b).unwrap();
 
-    let request_a = RegisterRequest {
+    let request_a = RegisterUserRequest {
         event_data: Some(event_data_a),
     };
-    let request_b = RegisterRequest {
+    let request_b = RegisterUserRequest {
         event_data: Some(event_data_b),
     };
     // Register with event_a
@@ -1103,11 +1103,11 @@ fn should_fail_to_register_user_with_empty_event_name() -> Result<(), CallError>
     let env = env();
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let user = principal_1();
-    let event_data = RegisterEventData {
+    let event_data = RegisterUserEventData {
         event_name: "".to_string(),
-        code: "".to_string(),
+        registration_code: "".to_string(),
     };
-    let empty_event = RegisterRequest {
+    let empty_event = RegisterUserRequest {
         event_data: Some(event_data),
     };
 
@@ -1127,12 +1127,12 @@ fn only_controllers_can_register_events() -> Result<(), CallError> {
     let env = env();
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let user = principal_1();
-    let empty_event = RegisterEventRequest {
+    let empty_event = AddEventRequest {
         event_name: "Test".to_string(),
-        code: None,
+        registration_code: None,
     };
 
-    let response = api::register_event(&env, issuer_id, user, &empty_event)?.unwrap_err();
+    let response = api::add_event(&env, issuer_id, user, &empty_event)?.unwrap_err();
 
     match response {
         EarlyAdopterError::External(msg) => {
@@ -1148,19 +1148,19 @@ fn only_controllers_can_register_events() -> Result<(), CallError> {
 fn should_register_event_with_random_code() -> Result<(), CallError> {
     let env = env();
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
-    let empty_event = RegisterEventRequest {
+    let empty_event = AddEventRequest {
         event_name: "Test".to_string(),
-        code: None,
+        registration_code: None,
     };
 
-    api::register_event(&env, issuer_id, controller(), &empty_event)?
+    api::add_event(&env, issuer_id, controller(), &empty_event)?
         .expect("API call to register event failed");
 
     let events_response =
         api::list_events(&env, issuer_id, controller())?.expect("API to list events failed");
 
     assert!(events_response.events.len() == 1);
-    assert_matches!(events_response.events[0].code, Some(_));
+    assert_matches!(events_response.events[0].registration_code, Some(_));
 
     Ok(())
 }
@@ -1170,18 +1170,21 @@ fn should_register_event_with_code() -> Result<(), CallError> {
     let env = env();
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let code = "code".to_string();
-    let empty_event = RegisterEventRequest {
+    let empty_event = AddEventRequest {
         event_name: "Test".to_string(),
-        code: Some(code.clone()),
+        registration_code: Some(code.clone()),
     };
 
-    api::register_event(&env, issuer_id, controller(), &empty_event)?.expect("API call failed");
+    api::add_event(&env, issuer_id, controller(), &empty_event)?.expect("API call failed");
 
     let events_response =
         api::list_events(&env, issuer_id, controller())?.expect("API to list events failed");
 
     assert!(events_response.events.len() == 1);
-    assert_eq!(events_response.events[0].code.clone().unwrap(), code);
+    assert_eq!(
+        events_response.events[0].registration_code.clone().unwrap(),
+        code
+    );
 
     Ok(())
 }
@@ -1191,14 +1194,14 @@ fn should_not_register_same_event_name_twice() -> Result<(), CallError> {
     let env = env();
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
     let code = "code".to_string();
-    let empty_event = RegisterEventRequest {
+    let empty_event = AddEventRequest {
         event_name: "Test".to_string(),
-        code: Some(code.clone()),
+        registration_code: Some(code.clone()),
     };
 
-    api::register_event(&env, issuer_id, controller(), &empty_event)?.expect("API call failed");
+    api::add_event(&env, issuer_id, controller(), &empty_event)?.expect("API call failed");
     let register_response =
-        api::register_event(&env, issuer_id, controller(), &empty_event)?.unwrap_err();
+        api::add_event(&env, issuer_id, controller(), &empty_event)?.unwrap_err();
 
     match register_response {
         EarlyAdopterError::External(msg) => {
@@ -1214,22 +1217,22 @@ fn should_not_register_same_event_name_twice() -> Result<(), CallError> {
 fn should_register_events() -> Result<(), CallError> {
     let env = env();
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
-    let event_1 = RegisterEventRequest {
+    let event_1 = AddEventRequest {
         event_name: "Test 1".to_string(),
-        code: None,
+        registration_code: None,
     };
-    let event_2 = RegisterEventRequest {
+    let event_2 = AddEventRequest {
         event_name: "Test 2".to_string(),
-        code: None,
+        registration_code: None,
     };
-    let event_3 = RegisterEventRequest {
+    let event_3 = AddEventRequest {
         event_name: "Test 3".to_string(),
-        code: None,
+        registration_code: None,
     };
 
-    api::register_event(&env, issuer_id, controller(), &event_1)?.expect("API call failed");
-    api::register_event(&env, issuer_id, controller(), &event_2)?.expect("API call failed");
-    api::register_event(&env, issuer_id, controller(), &event_3)?.expect("API call failed");
+    api::add_event(&env, issuer_id, controller(), &event_1)?.expect("API call failed");
+    api::add_event(&env, issuer_id, controller(), &event_2)?.expect("API call failed");
+    api::add_event(&env, issuer_id, controller(), &event_3)?.expect("API call failed");
 
     let events_response =
         api::list_events(&env, issuer_id, controller())?.expect("API to list events failed");
@@ -1268,7 +1271,7 @@ fn should_upgrade_issuer() -> Result<(), CallError> {
 fn should_retain_adopters_after_upgrade() -> Result<(), CallError> {
     let env = env();
     let issuer_id = install_issuer(&env, &DUMMY_ISSUER_INIT);
-    let request = RegisterRequest { event_data: None };
+    let request = RegisterUserRequest { event_data: None };
     let status_before = api::register_early_adopter(&env, issuer_id, principal_1(), &request)?
         .expect("Failed registering");
     let arg = candid::encode_one("()").expect("error encoding issuer init arg as candid");

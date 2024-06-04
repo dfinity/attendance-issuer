@@ -1,6 +1,15 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
+export interface AddEventRequest {
+  'registration_code' : [] | [string],
+  'event_name' : string,
+}
+export interface AddEventResponse {
+  'registration_code' : string,
+  'created_timestamp_s' : number,
+  'event_name' : string,
+}
 export type ArgumentValue = { 'Int' : number } |
   { 'String' : string };
 export interface CredentialSpec {
@@ -16,8 +25,8 @@ export interface EarlyAdopterResponse {
   'events' : Array<UserEventData>,
 }
 export interface EventRecord {
+  'registration_code' : [] | [string],
   'created_timestamp_s' : number,
-  'code' : [] | [string],
   'event_name' : string,
 }
 export interface GetCredentialRequest {
@@ -76,23 +85,24 @@ export interface PreparedCredentialData {
 }
 export type RegisterError = { 'Internal' : string } |
   { 'External' : string };
-export interface RegisterEventData { 'code' : string, 'event_name' : string }
-export interface RegisterEventRequest {
-  'code' : [] | [string],
+export interface RegisterUserEventData {
+  'registration_code' : string,
   'event_name' : string,
 }
-export interface RegisterEventResponse {
-  'created_timestamp_s' : number,
-  'code' : string,
-  'event_name' : string,
+export interface RegisterUserRequest {
+  'event_data' : [] | [RegisterUserEventData],
 }
-export interface RegisterRequest { 'event_data' : [] | [RegisterEventData] }
 export interface SignedIdAlias { 'credential_jws' : string }
 export interface UserEventData {
   'joined_timestamp_s' : number,
   'event_name' : string,
 }
 export interface _SERVICE {
+  'add_event' : ActorMethod<
+    [AddEventRequest],
+    { 'Ok' : AddEventResponse } |
+      { 'Err' : RegisterError }
+  >,
   'configure' : ActorMethod<[IssuerConfig], undefined>,
   'derivation_origin' : ActorMethod<
     [DerivationOriginRequest],
@@ -116,13 +126,8 @@ export interface _SERVICE {
       { 'Err' : IssueCredentialError }
   >,
   'register_early_adopter' : ActorMethod<
-    [RegisterRequest],
+    [RegisterUserRequest],
     { 'Ok' : EarlyAdopterResponse } |
-      { 'Err' : RegisterError }
-  >,
-  'register_event' : ActorMethod<
-    [RegisterEventRequest],
-    { 'Ok' : RegisterEventResponse } |
       { 'Err' : RegisterError }
   >,
   'vc_consent_message' : ActorMethod<

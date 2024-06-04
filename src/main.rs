@@ -57,7 +57,7 @@ struct EventRecord {
     // This code can be randomly generated or passed when creating an event.
     // Users that want to register for an event need to pass the correct code.
     // The use case is that only users attending an event will learn about the code.
-    pub code: String,
+    pub registration_code: String,
 }
 
 impl Storable for EventRecord {
@@ -113,38 +113,43 @@ pub enum RegisterError {
     External(String),
 }
 
+// User-facing type used in RegisterUserRequest
 #[derive(CandidType, Clone, Deserialize)]
-pub struct RegisterEventData {
+pub struct RegisterUserEventData {
     pub event_name: String,
-    pub code: String,
+    pub registration_code: String,
 }
 
+// User-facing type used in register_early_adopter
 #[derive(CandidType, Clone, Deserialize)]
-pub struct RegisterRequest {
-    pub event_data: Option<RegisterEventData>,
+pub struct RegisterUserRequest {
+    pub event_data: Option<RegisterUserEventData>,
 }
 
+// User-facing type used in add_event
 #[derive(CandidType, Clone, Deserialize)]
-pub struct RegisterEventRequest {
+pub struct AddEventRequest {
     pub event_name: EventName,
-    pub code: Option<String>,
+    pub registration_code: Option<String>,
 }
 
+// User-facing type used in add_event
 #[derive(CandidType, Clone, Deserialize)]
-pub struct RegisterEventResponse {
+pub struct AddEventResponse {
     pub event_name: EventName,
-    pub code: String,
+    pub registration_code: String,
     pub created_timestamp_s: u32,
 }
 
-// User-facing container per-event data.
+// User-facing type used in ListEventsResponse
 #[derive(CandidType, Clone, Deserialize)]
 pub struct EventData {
     pub event_name: EventName,
-    pub code: Option<String>,
+    pub registration_code: Option<String>,
     pub created_timestamp_s: u32,
 }
 
+// User-facing type used in list_events
 #[derive(CandidType, Clone, Deserialize)]
 pub struct ListEventsResponse {
     pub events: Vec<EventData>,
@@ -546,7 +551,11 @@ async fn list_events() -> Result<ListEventsResponse, RegisterError> {
             .map(|(event_name, data)| EventData {
                 created_timestamp_s: data.created_timestamp_s.clone(),
                 event_name: event_name.clone(),
-                code: if is_admin { Some(data.code) } else { None },
+                registration_code: if is_admin {
+                    Some(data.registration_code)
+                } else {
+                    None
+                },
             })
             .collect();
         Ok(ListEventsResponse { events })
@@ -578,9 +587,7 @@ async fn generate_randome_event_code() -> Option<String> {
 
 #[update]
 #[candid_method]
-async fn register_event(
-    request: RegisterEventRequest,
-) -> Result<RegisterEventResponse, RegisterError> {
+async fn add_event(request: AddEventRequest) -> Result<AddEventResponse, RegisterError> {
     let user_id = caller();
     let now_s = (time() / 1_000_000_000) as u32;
     // Exit early if the event_name is present by is empty.
@@ -596,22 +603,22 @@ async fn register_event(
         )));
     }
     if is_admin(user_id).await {
-        let code = match request.code {
-            Some(code) => code,
+        let registration_code = match request.registration_code {
+            Some(registration_code) => registration_code,
             None => {
-                let Some(code) = generate_randome_event_code().await else {
+                let Some(registration_code) = generate_randome_event_code().await else {
                     return Err(RegisterError::Internal(
                         "There was an error creating the random code. Please try again."
                             .to_string(),
                     ));
                 };
-                code
+                registration_code
             }
         };
         EVENTS.with_borrow_mut(|events| {
             let new_event = EventRecord {
                 created_timestamp_s: now_s,
-                code: code.clone(),
+                registration_code: registration_code.clone(),
             };
             events.insert(request.event_name.clone(), new_event);
         });
@@ -619,9 +626,9 @@ async fn register_event(
             "Registered Event {} at timestamp {}.",
             request.event_name, now_s
         );
-        Ok(RegisterEventResponse {
+        Ok(AddEventResponse {
             event_name: request.event_name,
-            code,
+            registration_code,
             created_timestamp_s: now_s,
         })
     } else {
@@ -643,7 +650,9 @@ fn get_event(event_name: String) -> Option<EventRecord> {
 
 #[update]
 #[candid_method]
-fn register_early_adopter(request: RegisterRequest) -> Result<EarlyAdopterResponse, RegisterError> {
+fn register_early_adopter(
+    request: RegisterUserRequest,
+) -> Result<EarlyAdopterResponse, RegisterError> {
     let user_id = caller();
     let now_s = (time() / 1_000_000_000) as u32;
     // Validate event name and code (if present)
@@ -662,7 +671,7 @@ fn register_early_adopter(request: RegisterRequest) -> Result<EarlyAdopterRespon
             )));
         };
         // Exit early if the passed code doesn't match the event code
-        if event_record.code != requested_event.code {
+        if event_record.registration_code != requested_event.registration_code {
             return Err(RegisterError::Internal(format!(
                 "Code doesn't match for Event {}",
                 requested_event.event_name

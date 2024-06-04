@@ -123,30 +123,30 @@ type HttpResponse = record {
     body: blob;
 };
 
-type RegisterEventData = record {
+type RegisterUserEventData = record {
     event_name: text;
-    code: text;
+    registration_code: text;
 };
 
-type RegisterRequest = record {
-    event_data: opt RegisterEventData;
+type RegisterUserRequest = record {
+    event_data: opt RegisterUserEventData;
 };
 
-type RegisterEventRequest = record {
+type AddEventRequest = record {
     event_name: text;
-    code: opt text;
+    registration_code: opt text;
 };
 
-type RegisterEventResponse = record {
+type AddEventResponse = record {
     event_name: text;
     created_timestamp_s: nat32;
-    code: text;
+    registration_code: text;
 };
 
 type EventRecord = record {
     event_name: text;
     created_timestamp_s: nat32;
-    code: opt text;
+    registration_code: opt text;
 };
 
 type ListEventsResponse = record {
@@ -164,8 +164,8 @@ service: (opt IssuerConfig) -> {
     configure: (IssuerConfig) -> ();
 
     /// Register a user as an early adopter.
-    register_early_adopter : (RegisterRequest) ->  (variant { Ok : EarlyAdopterResponse; Err : RegisterError });
-    register_event : (RegisterEventRequest) -> (variant { Ok : RegisterEventResponse; Err : RegisterError });
+    register_early_adopter : (RegisterUserRequest) ->  (variant { Ok : EarlyAdopterResponse; Err : RegisterError });
+    add_event : (AddEventRequest) -> (variant { Ok : AddEventResponse; Err : RegisterError });
     list_events : () -> (variant { Ok : ListEventsResponse; Err : RegisterError });
 
     /// Serve the app
