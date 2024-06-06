@@ -3,6 +3,7 @@ import Layout from "../layouts/Layout.astro";
 import content from "../contents/index.json";
 import Logos from "../components/Logos.astro";
 import GithubIcon from "../assets/GithubIcon.svg";
+import WarningIcon from "../assets/WarningIcon.svg";
 ---
 
 <Layout title={content.meta.title}>
@@ -30,6 +31,13 @@ import GithubIcon from "../assets/GithubIcon.svg";
         </h1>
         <p class="lead-text">{content.mainLead}</p>
         <button class="button hidden" data-tid="login-button" data-login>{content.iibuttontext}</button>
+        <div id="missing-code-msg">
+          <p class="missing-code-msg">
+            <img src={WarningIcon.src} alt="Warning icon" />
+            <span>{content.iiMissingButtonText1}</span>
+          </p>
+          <p class="missing-code-msg">{content.iiMissingButtonText2}</p>
+        </div>
       </div>
       <div class="card__image">
         <img src={content.mainImage} alt="Internet Identity" />
@@ -51,7 +59,7 @@ import GithubIcon from "../assets/GithubIcon.svg";
             ))
           }
         </ol>
-        <button class="button" data-login>{content.iibuttontext}</button>
+        <button class="button hidden" data-login>{content.iibuttontext}</button>
       </article>
 
       <article class="section section--innovation" id="identity-innovation">
@@ -90,10 +98,14 @@ import GithubIcon from "../assets/GithubIcon.svg";
   import { getEventFromParams } from "../utils/get-event-from-params";
 
   const enableLogin = () => {
-    const loginButton = document.querySelector("[data-login]");
+    const loginButtons = document.querySelectorAll("[data-login]");
+    const missingCodeElement = document.querySelector("#missing-code-msg");
     const currentEvent = getEventFromParams();
-    if (currentEvent && loginButton) {
-      loginButton.classList.remove("hidden");
+    if (currentEvent) {
+      missingCodeElement?.classList.add("hidden");
+      loginButtons.forEach((element) => {
+        element.classList.remove("hidden");
+      });
     }
   };
   enableLogin();

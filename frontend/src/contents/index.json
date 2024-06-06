@@ -23,6 +23,8 @@
   },
 
   "iibuttontext": "Start with Internet Identity",
+  "iiMissingButtonText1": "The event code is missing in the URL.",
+  "iiMissingButtonText2": "Use the link provided during the conference to earn the credential.",
 
   "mainTitle1": "Earn a Proof",
   "mainTitle2": "of Attendance",
@@ -32,12 +34,12 @@
 
   "howtoChip": "How it Works",
   "howtoTitle": "Use a verifiable credential to access an exclusive OpenChat group",
-  "howtoLead": "Whether you’re a developer, end-user, or digital identity enthusiast, earn a proof of attendance credential, and join an exclusive group on OpenChat, a chat application running end-to-end on the Internet Computer blockchain.",
+  "howtoLead": "OpenChat is a chat application running end-to-end on the Internet Computer blockchain. With your credential, you can join an exclusive group on OpenChat where you can network with your fellow conference attendees.",
 
   "howtoSteps": [
     {
       "title": "Sign up with Internet Identity",
-      "body": "Click “Let’s go!” and sign up for your Proof of Attendance credential with Internet Identity."
+      "body": "Click “Start with Internet Identity”, complete onboarding, and earn your credential. Internet Identity is a secure method for connecting to dapps on the Internet Computer."
     },
     {
       "title": "Get your credential",
