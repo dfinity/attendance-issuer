@@ -20,8 +20,8 @@
   "dependencies": {
     "@astrojs/check": "^0.5.4",
     "@dfinity/auth-client": "^1.0.1",
-    "@junobuild/analytics": "^0.0.22",
-    "astro": "^4.4.0",
+    "@junobuild/analytics": "^0.0.31",
+    "astro": "^5.1.7",
     "typescript": "^5.3.3"
   },
   "devDependencies": {
